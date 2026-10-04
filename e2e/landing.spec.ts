@@ -5,7 +5,7 @@ test.describe("landing smoke", () => {
     await page.goto("/");
 
     await expect(
-      page.getByRole("heading", { name: /AI Codebase\s*Auditor/i }),
+      page.getByRole("heading", { name: /RepoLens/i }),
     ).toBeVisible();
     await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Get started" })).toBeVisible();

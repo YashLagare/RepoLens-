@@ -2,7 +2,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 
 const CODE_LINES = [
-  { cls: "code-comment", text: "// AI Codebase Auditor" },
+  { cls: "code-comment", text: "// RepoLens" },
   { cls: "code-key", text: 'project.connect("github.com/you/app")' },
   { cls: "", text: "" },
   { cls: "code-ok", text: "→ reading files.............. done" },
@@ -89,7 +89,7 @@ export default function HomePage() {
               href="#top"
               className="landing-brand shrink-0 text-sm text-(--landing-ink)"
             >
-              AI Codebase Auditor
+              RepoLens
             </a>
             <nav
               aria-label="Landing sections"
@@ -126,11 +126,10 @@ export default function HomePage() {
         <div className="relative z-10 mx-auto grid min-h-[calc(100svh-5.5rem)] w-full max-w-6xl items-center gap-10 px-6 pb-16 pt-10 sm:px-10 md:grid-cols-[1.05fr_0.95fr] md:gap-12 lg:gap-14">
           <div className="py-6 sm:py-10">
             <h1 className="landing-reveal landing-reveal-delay-1 landing-title text-5xl text-(--landing-ink) sm:text-6xl lg:text-[4.75rem]">
-              AI Codebase
-              <span className="block">Auditor</span>
+              RepoLens
             </h1>
             <p className="landing-reveal landing-reveal-delay-2 mt-6 text-2xl font-semibold tracking-tight text-(--landing-ink) sm:text-3xl">
-              An AI senior developer for your repository.
+              AI-Powered Codebase Analysis & RAG Platform
             </p>
             <p className="landing-reveal landing-reveal-delay-3 mt-5 max-w-md text-base leading-relaxed text-(--landing-muted) sm:text-lg">
               Connect a project, get a health report, and ask precise questions
@@ -314,7 +313,7 @@ export default function HomePage() {
       <footer className="border-t border-(--landing-line) px-6 py-8 text-sm text-(--landing-muted) sm:px-10">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
           <p className="landing-brand text-(--landing-ink)">
-            AI Codebase Auditor
+            RepoLens
           </p>
           <p>Next.js · RAG · Groq · pgvector</p>
         </div>

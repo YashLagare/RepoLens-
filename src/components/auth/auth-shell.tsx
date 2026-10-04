@@ -37,7 +37,7 @@ export function AuthShell({ children, mode }: AuthShellProps) {
                 <span className="size-2.5 rounded-full bg-white" />
               </span>
               <span className="text-sm font-semibold tracking-tight">
-                AI Codebase Auditor
+                RepoLens
               </span>
             </Link>
 

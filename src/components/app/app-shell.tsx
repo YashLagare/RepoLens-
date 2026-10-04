@@ -26,7 +26,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
                 <span className="size-2 rounded-full bg-[color:var(--app-accent)]" />
               </span>
               <span className="hidden text-sm font-semibold tracking-tight sm:inline">
-                AI Codebase Auditor
+                RepoLens
               </span>
             </Link>
             <nav className="flex items-center gap-1">

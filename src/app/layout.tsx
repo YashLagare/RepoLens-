@@ -22,9 +22,9 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Code Auditor",
+  title: "RepoLens — AI-Powered Codebase Analysis",
   description:
-    "An AI Senior developer that understands your codebase - health reports, issues, and chat grounded in your real code.",
+    "Analyze JavaScript and TypeScript repositories, identify codebase issues, explore source files, and ask grounded questions using RAG-powered code retrieval.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

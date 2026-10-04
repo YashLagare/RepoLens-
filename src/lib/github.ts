@@ -115,7 +115,7 @@ export async function exchangeGitHubCode(code: string): Promise<{
     headers: {
       Authorization: `Bearer ${tokenJson.access_token}`,
       Accept: "application/vnd.github+json",
-      "User-Agent": "ai-codebase-auditor",
+      "User-Agent": "repolens",
     },
   });
 
@@ -145,7 +145,7 @@ export async function listGitHubRepos(
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/vnd.github+json",
-          "User-Agent": "ai-codebase-auditor",
+          "User-Agent": "repolens",
         },
         cache: "no-store",
       },
@@ -183,7 +183,7 @@ export async function downloadGitHubZipball(
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/vnd.github+json",
-      "User-Agent": "ai-codebase-auditor",
+      "User-Agent": "repolens",
     },
     redirect: "follow",
   });

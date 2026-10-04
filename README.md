@@ -1,6 +1,6 @@
-# AI Codebase Auditor
+# RepoLens
 
-**A Static Analysis & Retrieval-Augmented Generation (RAG) Platform for JavaScript and TypeScript Codebases**
+**AI-Powered Codebase Analysis & RAG Platform**
 
 ---
 
@@ -8,7 +8,7 @@
 
 | Field | Detail |
 |---|---|
-| **Project Name** | AI Codebase Auditor (code-analyzer) |
+| **Project Name** | RepoLens (repolens) |
 | **Current Version** | 0.1.0 |
 | **Architectural Model** | Full-Stack Next.js Application (Server Actions + Route Handlers + RAG Engine) |
 | **Primary Languages** | TypeScript, JavaScript, SQL |
@@ -72,7 +72,7 @@ Engineering teams, technical leads, and code reviewers frequently spend hours na
 
 ## 1 Executive Summary
 
-AI Codebase Auditor is a developer tool built with Next.js 16, React 19, TypeScript, PostgreSQL (`pgvector`), and Prisma. It automates the extraction, AST parsing (Tree-sitter), vector embedding (`@xenova/transformers` all-MiniLM-L6-v2), and LLM-assisted review (Groq) of JavaScript and TypeScript repositories.
+RepoLens is a developer tool built with Next.js 16, React 19, TypeScript, PostgreSQL (`pgvector`), and Prisma. It automates the extraction, AST parsing (Tree-sitter), vector embedding (`@xenova/transformers` all-MiniLM-L6-v2), and LLM-assisted review (Groq) of JavaScript and TypeScript repositories.
 
 The system computes category health scores across architecture, security, performance, code quality, and testing by combining static heuristics with structured LLM review. It surfaces prioritized issue lists and exposes a RAG-backed conversational interface alongside an interactive code explorer. User identity is managed via Auth.js (supporting Google OAuth, GitHub OAuth, and email/password credentials), and subscription billing is handled through Stripe.
 
@@ -211,7 +211,7 @@ The application is structured as a full-stack Next.js system. Analysis is execut
 ## 5 Repository Structure
 
 ```text
-AI-Code-Analyzer/
+RepoLens/
 ├── prisma/
 │   └── schema.prisma            # Prisma schema with pgvector and relation definitions
 ├── public/                      # Static assets, banner images, icons
@@ -698,7 +698,7 @@ Authentication is powered by Auth.js (NextAuth v5 beta) configured with JWT sess
 ### Step 1: Clone Repository & Install Dependencies
 ```bash
 git clone <repository-url>
-cd AI-Code-Analyzer
+cd RepoLens
 npm install
 ```
 
