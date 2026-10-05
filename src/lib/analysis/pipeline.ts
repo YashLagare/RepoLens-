@@ -10,7 +10,7 @@ export async function buildProjectKnowledge(projectId: string): Promise<{
 }> {
   await setProjectProgress(projectId, {
     step: "Creating code knowledge",
-    percent: 40,
+    percent: 45,
     status: "processing",
     errorMessage: null,
   });
@@ -25,7 +25,7 @@ export async function buildProjectKnowledge(projectId: string): Promise<{
 
     await setProjectProgress(projectId, {
       step: "Chunking source files",
-      percent: 50,
+      percent: 55,
       fileCount: files.length,
     });
 
@@ -75,13 +75,13 @@ export async function runFullProjectAnalysis(projectId: string): Promise<void> {
 
   await setProjectProgress(projectId, {
     step: "Running analysis",
-    percent: 80,
+    percent: 85,
     status: "processing",
   });
 
   await setProjectProgress(projectId, {
     step: "Generating report",
-    percent: 90,
+    percent: 95,
   });
 
   await generateProjectReport(projectId);

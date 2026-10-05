@@ -4,15 +4,17 @@ import { env, pipeline } from "@xenova/transformers";
 env.allowLocalModels = false;
 
 export const EMBEDDING_DIMENSIONS = 384;
-const BATCH_SIZE = 16;
+const BATCH_SIZE = 24;
 const MODEL_ID = "Xenova/all-MiniLM-L6-v2";
 
 type EmbeddingOutput = {
   data: Float32Array | number[];
+  dims?: number[];
+  tolist?: () => number[] | number[][];
 };
 
 type FeatureExtractor = (
-  text: string,
+  text: string | string[],
   options: { pooling: "mean"; normalize: boolean },
 ) => Promise<EmbeddingOutput>;
 
@@ -43,8 +45,8 @@ function toNumberArray(data: Float32Array | number[]): number[] {
 }
 
 /**
- * Local MiniLM embeddings — no API quota.
- * First call downloads the model (~23MB) into the transformers cache.
+ * Fast local MiniLM embeddings on serverless CPU.
+ * Batches inputs and uses single tensor inference for maximum speed.
  */
 export async function embedTexts(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
@@ -53,11 +55,51 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
   const results: number[][] = [];
 
   for (let i = 0; i < texts.length; i += BATCH_SIZE) {
-    const batch = texts.slice(i, i + BATCH_SIZE);
+    const rawBatch = texts.slice(i, i + BATCH_SIZE);
+    // Truncate to reasonable length to speed up tokenization
+    const batch = rawBatch.map((text) =>
+      text.length > 2500 ? text.slice(0, 2500) : text,
+    );
+
+    try {
+      // Pass the entire batch array directly to transformers.js
+      const output = await extractor(batch, {
+        pooling: "mean",
+        normalize: true,
+      });
+
+      if (output && typeof output.tolist === "function") {
+        const list = output.tolist();
+        if (Array.isArray(list) && list.length > 0) {
+          if (typeof list[0] === "number") {
+            results.push(list as number[]);
+          } else {
+            results.push(...(list as number[][]));
+          }
+          continue;
+        }
+      }
+
+      if (output?.data) {
+        const rawData = output.data as Float32Array;
+        for (let b = 0; b < batch.length; b++) {
+          const start = b * EMBEDDING_DIMENSIONS;
+          const slice = Array.from(
+            rawData.subarray(start, start + EMBEDDING_DIMENSIONS),
+          );
+          if (slice.length === EMBEDDING_DIMENSIONS) {
+            results.push(slice);
+          }
+        }
+        continue;
+      }
+    } catch {
+      // Fallback to Promise.all if batched array inference is not supported
+    }
+
     const embedded = await Promise.all(
       batch.map(async (text) => {
-        const truncated = text.length > 8000 ? text.slice(0, 8000) : text;
-        const output = await extractor(truncated, {
+        const output = await extractor(text, {
           pooling: "mean",
           normalize: true,
         });
@@ -79,5 +121,9 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
 /** Embed a single query string for similarity search. */
 export async function embedQuery(text: string): Promise<number[]> {
   const [embedding] = await embedTexts([text]);
+  if (!embedding) {
+    throw new Error("Failed to generate embedding for query");
+  }
   return embedding;
 }
+

@@ -40,10 +40,20 @@ export function AnalysisProgress({
           cache: "no-store",
         });
         if (!response.ok) return;
-        const data = (await response.json()) as ProgressState;
-        if (!cancelled) setState(data);
+
+        const text = await response.text();
+        if (!text || cancelled) return;
+
+        try {
+          const data = JSON.parse(text) as ProgressState;
+          if (!cancelled && data && data.status) {
+            setState(data);
+          }
+        } catch {
+          // Ignore transient non-JSON / HTML responses
+        }
       } catch {
-        // ignore transient poll errors
+        // Ignore network hiccups; will retry on next poll
       }
     }
 
@@ -71,28 +81,41 @@ export function AnalysisProgress({
         const response = await fetch(`/api/projects/${projectId}/analyze`, {
           method: "POST",
         });
-        const data = (await response.json()) as {
+
+        let data: {
+          ok?: boolean;
           error?: string;
           status?: ProgressState["status"];
           progressStep?: string;
           progressPercent?: number;
-        };
-        if (!response.ok && data.error) {
-          setStartError(data.error);
-          return;
+        } | null = null;
+
+        const text = await response.text();
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch {
+            // Non-JSON or empty response (e.g. Vercel 504 Gateway Timeout)
+            // Polling will continue to track database status
+          }
         }
-        if (data.status) {
-          setState((current) => ({
-            ...current,
-            status: data.status ?? current.status,
-            progressStep: data.progressStep ?? current.progressStep,
-            progressPercent: data.progressPercent ?? current.progressPercent,
-          }));
+
+        if (data) {
+          if (!response.ok && data.error) {
+            setStartError(data.error);
+            return;
+          }
+          if (data.status) {
+            setState((current) => ({
+              ...current,
+              status: data.status ?? current.status,
+              progressStep: data.progressStep ?? current.progressStep,
+              progressPercent: data.progressPercent ?? current.progressPercent,
+            }));
+          }
         }
-      } catch (error) {
-        setStartError(
-          error instanceof Error ? error.message : "Failed to start analysis",
-        );
+      } catch {
+        // Network error / connection drop: polling will continue tracking status
       }
     })();
   }, [projectId, state.progressPercent, state.status]);
@@ -117,26 +140,44 @@ export function AnalysisProgress({
       errorMessage: null,
     }));
 
-    const response = await fetch(`/api/projects/${projectId}/analyze`, {
-      method: "POST",
-    });
-    const data = (await response.json()) as {
-      error?: string;
-      status?: ProgressState["status"];
-      progressStep?: string;
-      progressPercent?: number;
-    };
-    if (!response.ok && data.error) {
-      setStartError(data.error);
-      return;
-    }
-    if (data.status) {
-      setState((current) => ({
-        ...current,
-        status: data.status ?? current.status,
-        progressStep: data.progressStep ?? current.progressStep,
-        progressPercent: data.progressPercent ?? current.progressPercent,
-      }));
+    try {
+      const response = await fetch(`/api/projects/${projectId}/analyze`, {
+        method: "POST",
+      });
+
+      let data: {
+        ok?: boolean;
+        error?: string;
+        status?: ProgressState["status"];
+        progressStep?: string;
+        progressPercent?: number;
+      } | null = null;
+
+      const text = await response.text();
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          // Handled by polling
+        }
+      }
+
+      if (data) {
+        if (!response.ok && data.error) {
+          setStartError(data.error);
+          return;
+        }
+        if (data.status) {
+          setState((current) => ({
+            ...current,
+            status: data.status ?? current.status,
+            progressStep: data.progressStep ?? current.progressStep,
+            progressPercent: data.progressPercent ?? current.progressPercent,
+          }));
+        }
+      }
+    } catch {
+      // Handled by polling
     }
   }
 

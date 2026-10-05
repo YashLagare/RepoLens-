@@ -228,13 +228,127 @@ function mergeSmallChunks(chunks: CodeChunkDraft[]): CodeChunkDraft[] {
   return merged;
 }
 
-/** Chunk every provided source file. */
+export const MAX_PROJECT_CHUNKS = 75;
+
+/**
+ * Score files by architectural relevance to ensure initial analysis focuses
+ * on high-signal application code (pages, components, api, lib).
+ */
+export function getFileRelevanceScore(filePath: string): number {
+  const norm = filePath.toLowerCase().replace(/\\/g, "/");
+
+  // Exclude or severely deprioritize tests, mocks, stories, configs, and declarations
+  if (
+    norm.includes(".test.") ||
+    norm.includes(".spec.") ||
+    norm.includes("__tests__/") ||
+    norm.includes("__mocks__/") ||
+    norm.includes("/tests/") ||
+    norm.includes("/test/") ||
+    norm.includes("/e2e/") ||
+    norm.endsWith(".d.ts") ||
+    norm.includes(".stories.") ||
+    norm.includes(".config.") ||
+    norm.includes(".eslintrc")
+  ) {
+    return 0;
+  }
+
+  // Tier 1 (Highest signal): Pages, App router, API routes, Controllers
+  if (
+    norm.startsWith("src/app/") ||
+    norm.startsWith("app/") ||
+    norm.startsWith("src/pages/") ||
+    norm.startsWith("pages/") ||
+    norm.startsWith("src/routes/") ||
+    norm.startsWith("routes/") ||
+    norm.includes("/api/") ||
+    norm.startsWith("api/") ||
+    norm.includes("/controllers/")
+  ) {
+    return 100;
+  }
+
+  // Tier 2: Core library, business logic, components, services
+  if (
+    norm.startsWith("src/lib/") ||
+    norm.startsWith("lib/") ||
+    norm.startsWith("src/components/") ||
+    norm.startsWith("components/") ||
+    norm.startsWith("src/services/") ||
+    norm.startsWith("services/") ||
+    norm.startsWith("src/server/") ||
+    norm.startsWith("server/")
+  ) {
+    return 80;
+  }
+
+  // Tier 3: Hooks, utils, models, store, context, actions
+  if (
+    norm.includes("/hooks/") ||
+    norm.includes("/utils/") ||
+    norm.includes("/models/") ||
+    norm.includes("/store/") ||
+    norm.includes("/context/") ||
+    norm.includes("/actions/")
+  ) {
+    return 60;
+  }
+
+  // Tier 4: Other src files
+  if (norm.startsWith("src/")) {
+    return 40;
+  }
+
+  // Tier 5: Root source files
+  if (!norm.includes("/")) {
+    return 50;
+  }
+
+  return 20;
+}
+
+/** Chunk provided source files, prioritizing high-signal files and capping at maxChunks. */
 export function chunkProjectFiles(
   files: { relativePath: string; content: string }[],
+  maxChunks: number = MAX_PROJECT_CHUNKS,
 ): CodeChunkDraft[] {
+  if (files.length === 0 || maxChunks <= 0) return [];
+
+  // Filter out low-signal/test files first
+  const highSignalFiles = files.filter(
+    (file) => getFileRelevanceScore(file.relativePath) > 0,
+  );
+
+  // If all files were filtered (e.g. non-standard repo structure), fall back to original files
+  const candidateFiles =
+    highSignalFiles.length > 0 ? highSignalFiles : files;
+
+  // Sort files by relevance score descending, then by shorter path
+  const sortedFiles = [...candidateFiles].sort((a, b) => {
+    const scoreDiff =
+      getFileRelevanceScore(b.relativePath) -
+      getFileRelevanceScore(a.relativePath);
+    if (scoreDiff !== 0) return scoreDiff;
+    return a.relativePath.length - b.relativePath.length;
+  });
+
   const all: CodeChunkDraft[] = [];
-  for (const file of files) {
-    all.push(...chunkSourceFile(file.relativePath, file.content));
+
+  for (const file of sortedFiles) {
+    if (all.length >= maxChunks) break;
+
+    const fileChunks = chunkSourceFile(file.relativePath, file.content);
+    if (fileChunks.length === 0) continue;
+
+    const remainingBudget = maxChunks - all.length;
+    if (fileChunks.length <= remainingBudget) {
+      all.push(...fileChunks);
+    } else {
+      all.push(...fileChunks.slice(0, remainingBudget));
+      break;
+    }
   }
+
   return all;
 }

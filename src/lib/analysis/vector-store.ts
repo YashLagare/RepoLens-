@@ -20,11 +20,14 @@ export async function storeProjectChunks(
 ): Promise<number> {
   await prisma.codeChunk.deleteMany({ where: { projectId } });
 
-  if (drafts.length === 0) {
+  // Ensure maximum 80 high-signal chunks are indexed
+  const cappedDrafts = drafts.slice(0, 80);
+
+  if (cappedDrafts.length === 0) {
     throw new Error("No code chunks were produced from the source files.");
   }
 
-  const records = drafts.map((draft) => ({
+  const records = cappedDrafts.map((draft) => ({
     id: randomUUID(),
     projectId,
     filePath: draft.filePath,
