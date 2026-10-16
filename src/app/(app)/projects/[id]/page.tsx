@@ -1,3 +1,4 @@
+import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import {
   GenerateReportButton,
   RetryFullAnalysisButton,
@@ -82,6 +83,14 @@ export default async function ProjectOverviewPage({ params }: PageProps) {
                 </Link>
               ) : null}
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <DeleteProjectButton
+              projectId={project.id}
+              projectName={project.name}
+              variant="button"
+              redirectOnDelete
+            />
           </div>
         </div>
         <nav className="mt-5 flex flex-wrap gap-2">

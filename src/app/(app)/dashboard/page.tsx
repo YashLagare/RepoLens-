@@ -1,3 +1,4 @@
+import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import { buttonVariants } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -119,6 +120,10 @@ export default async function DashboardPage() {
                     >
                       {project.status}
                     </span>
+                    <DeleteProjectButton
+                      projectId={project.id}
+                      projectName={project.name}
+                    />
                   </div>
                 </li>
               );

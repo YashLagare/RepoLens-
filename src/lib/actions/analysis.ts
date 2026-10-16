@@ -239,3 +239,48 @@ export async function generateReportAction(
     };
   }
 }
+
+export async function deleteProject(
+  projectId: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (!projectId) return { success: false, error: "Missing project id." };
+
+  const project = await requireOwnedProject(projectId);
+  if (!project) {
+    return { success: false, error: "Project not found or unauthorized." };
+  }
+
+  try {
+    await deleteProjectFiles(project.id);
+    await prisma.project.delete({
+      where: { id: project.id },
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/projects/${project.id}`);
+    return { success: true };
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to delete project.",
+    };
+  }
+}
+
+export async function deleteProjectAction(
+  _prev: RetryState,
+  formData: FormData,
+): Promise<RetryState> {
+  const projectId = String(formData.get("projectId") ?? "");
+  if (!projectId) return { error: "Missing project id." };
+
+  const result = await deleteProject(projectId);
+  if (!result.success) {
+    return { error: result.error ?? "Failed to delete project." };
+  }
+
+  redirect("/dashboard");
+}
+
