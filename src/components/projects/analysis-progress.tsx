@@ -203,7 +203,7 @@ export function AnalysisProgress({
           />
         </div>
 
-        <ul className="mt-7 space-y-3">
+        <ul className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {ANALYSIS_STEPS.filter((step) => step.id !== "done").map((step) => {
             const complete =
               state.status === "completed" ||
@@ -215,14 +215,26 @@ export function AnalysisProgress({
               state.progressPercent < step.percent;
 
             return (
-              <li key={step.id} className="flex items-center gap-3 text-sm">
+              <li
+                key={step.id}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl border p-3 text-sm transition-colors",
+                  complete &&
+                    "border-[color:var(--app-line)] bg-[color:var(--app-accent)]/[0.04]",
+                  active &&
+                    "border-[color:var(--app-accent)] bg-[color:var(--app-accent)]/[0.08]",
+                  !complete &&
+                    !active &&
+                    "border-[color:var(--app-line)]/50 bg-[color:var(--app-surface)]/30 opacity-70",
+                )}
+              >
                 <span
                   className={cn(
-                    "flex size-6 items-center justify-center rounded-full border text-xs",
+                    "flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
                     complete &&
-                      "border-[color:var(--app-accent)] bg-[color:var(--app-accent)] text-white",
+                      "border-[color:var(--app-accent)] bg-[color:var(--app-accent)] text-white shadow-xs",
                     active &&
-                      "border-[color:var(--app-accent)] text-[color:var(--app-accent-deep)]",
+                      "border-[color:var(--app-accent)] text-[color:var(--app-accent-deep)] ring-2 ring-[color:var(--app-accent)]/20 animate-pulse",
                     !complete &&
                       !active &&
                       "border-[color:var(--app-line)] text-[color:var(--app-muted)]",
@@ -232,6 +244,7 @@ export function AnalysisProgress({
                 </span>
                 <span
                   className={cn(
+                    "truncate",
                     complete || active
                       ? "font-medium text-foreground"
                       : "text-[color:var(--app-muted)]",
@@ -245,25 +258,33 @@ export function AnalysisProgress({
         </ul>
       </div>
 
-      <div className="app-panel space-y-1.5 p-5 text-sm text-[color:var(--app-muted)]">
-        <p>
-          Framework:{" "}
-          <span className="text-foreground">
-            {state.framework ?? "Detecting..."}
-          </span>
-        </p>
-        <p>
-          Source files:{" "}
-          <span className="text-foreground">{state.fileCount || "—"}</span>
-        </p>
-        {state.report ? (
-          <p>
-            Health score:{" "}
-            <span className="font-semibold text-[color:var(--app-accent-deep)]">
-              {state.report.healthScore}/100
-            </span>
+      <div className="app-panel grid grid-cols-1 gap-4 p-5 text-sm sm:grid-cols-3 sm:divide-x sm:divide-[color:var(--app-line)]">
+        <div className="space-y-0.5">
+          <p className="text-xs font-medium text-[color:var(--app-muted)]">
+            Framework
           </p>
-        ) : null}
+          <p className="text-base font-semibold tracking-tight text-foreground">
+            {state.framework ?? "Detecting..."}
+          </p>
+        </div>
+        <div className="space-y-0.5 sm:ps-6">
+          <p className="text-xs font-medium text-[color:var(--app-muted)]">
+            Source files
+          </p>
+          <p className="text-base font-semibold tracking-tight text-foreground">
+            {state.fileCount || "—"}
+          </p>
+        </div>
+        <div className="space-y-0.5 sm:ps-6">
+          <p className="text-xs font-medium text-[color:var(--app-muted)]">
+            Health score
+          </p>
+          <p className="text-base font-semibold tracking-tight text-[color:var(--app-accent-deep)]">
+            {state.report
+              ? `${state.report.healthScore}/100`
+              : "Calculating..."}
+          </p>
+        </div>
       </div>
 
       {state.status === "failed" || startError ? (

@@ -25,7 +25,7 @@ export default async function ProjectChatPage({ params }: PageProps) {
   const ready = project._count.chunks > 0;
 
   return (
-    <main className="app-page app-page-narrow">
+    <main className="app-page">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="app-kicker">AI Chat</p>

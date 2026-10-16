@@ -63,7 +63,7 @@ export default async function ProjectOverviewPage({ params }: PageProps) {
   }>;
 
   return (
-    <main className="app-page app-page-narrow">
+    <main className="app-page">
       <header className="mb-8">
         <p className="app-kicker">Project</p>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-4">

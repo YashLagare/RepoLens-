@@ -66,7 +66,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const githubConnected = Boolean(user?.githubAccessToken);
 
   return (
-    <main className="app-page app-page-narrow">
+    <main className="app-page">
       <header className="mb-8">
         <p className="app-kicker">Account</p>
         <h1 className="app-title mt-2 text-3xl">Settings</h1>

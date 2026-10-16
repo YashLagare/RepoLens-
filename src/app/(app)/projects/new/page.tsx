@@ -37,7 +37,7 @@ export default async function NewProjectPage() {
   }
 
   return (
-    <main className="app-page app-page-narrow">
+    <main className="app-page">
       <header className="mb-8">
         <p className="app-kicker">New analysis</p>
         <h1 className="app-title mt-2 text-3xl">Analyze a repository</h1>
