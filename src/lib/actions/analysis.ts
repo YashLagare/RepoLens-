@@ -251,13 +251,19 @@ export async function deleteProject(
   }
 
   try {
-    await deleteProjectFiles(project.id);
-    await prisma.project.delete({
-      where: { id: project.id },
-    });
+    try {
+      await deleteProjectFiles(project.id);
+    } catch (storageError) {
+      console.warn("Storage cleanup failed:", storageError);
+    }
+
+    await prisma.$transaction([
+      prisma.codeChunk.deleteMany({ where: { projectId: project.id } }),
+      prisma.report.deleteMany({ where: { projectId: project.id } }),
+      prisma.project.delete({ where: { id: project.id } }),
+    ]);
 
     revalidatePath("/dashboard");
-    revalidatePath(`/projects/${project.id}`);
     return { success: true };
   } catch (error) {
     if (isRedirectError(error)) throw error;

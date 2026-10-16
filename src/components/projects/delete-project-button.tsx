@@ -9,11 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { deleteProject } from "@/lib/actions/analysis";
 import { cn } from "@/lib/utils";
 import { Loader2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type MouseEvent, useState, useTransition } from "react";
+import { type MouseEvent, useState } from "react";
 import { toast } from "sonner";
 
 export interface DeleteProjectButtonProps {
@@ -36,7 +35,7 @@ export function DeleteProjectButton({
   redirectOnDelete = false,
 }: DeleteProjectButtonProps) {
   const [open, setOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
   const router = useRouter();
 
   function handleTriggerClick(e: MouseEvent) {
@@ -45,30 +44,41 @@ export function DeleteProjectButton({
     setOpen(true);
   }
 
-  function handleConfirmDelete(e: MouseEvent) {
+  async function handleConfirmDelete(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
+    if (pending) return;
 
-    startTransition(async () => {
-      try {
-        const result = await deleteProject(projectId);
-        if (result.success) {
-          toast.success(`Deleted ${projectName}`);
-          setOpen(false);
-          if (redirectOnDelete) {
-            router.push("/dashboard");
-          } else {
-            router.refresh();
-          }
-        } else {
-          toast.error(result.error ?? "Failed to delete project");
-        }
-      } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to delete project",
-        );
+    setPending(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.ok) {
+        toast.error(data?.error ?? "Failed to delete project");
+        setPending(false);
+        return;
       }
-    });
+
+      toast.success(`Deleted ${projectName}`);
+      setOpen(false);
+      setPending(false);
+
+      if (redirectOnDelete) {
+        router.push("/dashboard");
+      } else {
+        router.refresh();
+      }
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete project",
+      );
+      setPending(false);
+    }
   }
 
   return (

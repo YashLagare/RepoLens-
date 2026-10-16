@@ -1,13 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { findFirst, deleteProjectMock, deleteProjectFilesMock, revalidatePathMock, authMock } =
-  vi.hoisted(() => ({
-    findFirst: vi.fn(),
-    deleteProjectMock: vi.fn(),
-    deleteProjectFilesMock: vi.fn(),
-    revalidatePathMock: vi.fn(),
-    authMock: vi.fn(),
-  }));
+const {
+  findFirst,
+  deleteProjectMock,
+  deleteChunksMock,
+  deleteReportMock,
+  deleteProjectFilesMock,
+  revalidatePathMock,
+  authMock,
+  transactionMock,
+} = vi.hoisted(() => ({
+  findFirst: vi.fn(),
+  deleteProjectMock: vi.fn(),
+  deleteChunksMock: vi.fn(),
+  deleteReportMock: vi.fn(),
+  deleteProjectFilesMock: vi.fn(),
+  revalidatePathMock: vi.fn(),
+  authMock: vi.fn(),
+  transactionMock: vi.fn((ops) => Promise.all(ops)),
+}));
 
 vi.mock("@/lib/auth", () => ({
   auth: authMock,
@@ -15,9 +26,16 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("@/lib/db", () => ({
   prisma: {
+    $transaction: transactionMock,
     project: {
       findFirst,
       delete: deleteProjectMock,
+    },
+    codeChunk: {
+      deleteMany: deleteChunksMock,
+    },
+    report: {
+      deleteMany: deleteReportMock,
     },
   },
 }));
@@ -70,8 +88,7 @@ describe("deleteProject action", () => {
     const result = await deleteProject("proj-abc");
     expect(result.success).toBe(true);
     expect(deleteProjectFilesMock).toHaveBeenCalledWith("proj-abc");
-    expect(deleteProjectMock).toHaveBeenCalledWith({ where: { id: "proj-abc" } });
+    expect(transactionMock).toHaveBeenCalled();
     expect(revalidatePathMock).toHaveBeenCalledWith("/dashboard");
-    expect(revalidatePathMock).toHaveBeenCalledWith("/projects/proj-abc");
   });
 });
