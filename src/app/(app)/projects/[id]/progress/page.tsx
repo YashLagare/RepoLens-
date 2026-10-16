@@ -33,7 +33,7 @@ export default async function ProjectProgressPage({ params }: PageProps) {
   if (!project) notFound();
 
   return (
-    <main className="app-page app-page-narrow">
+    <main className="app-page">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="app-kicker">Analysis</p>
