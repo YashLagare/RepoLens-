@@ -73,7 +73,10 @@ export async function POST(_request: Request, context: RouteContext) {
       progressPercent: updated?.progressPercent ?? 100,
     });
   } catch (error) {
-    // Graceful error capture ensuring valid JSON is always returned
+    const errorMessage =
+      error instanceof Error ? error.message : "Analysis failed.";
+    console.error("Analysis execution error:", error);
+
     let projectId: string | undefined;
     try {
       const resolved = await context.params;
@@ -85,21 +88,26 @@ export async function POST(_request: Request, context: RouteContext) {
     let updated = null;
     if (projectId) {
       try {
-        updated = await prisma.project.findUnique({
+        updated = await prisma.project.update({
           where: { id: projectId },
+          data: {
+            status: "failed",
+            progressStep: "Analysis failed",
+            errorMessage,
+          },
         });
       } catch {
-        // ignore
+        // ignore fallback error
       }
     }
 
     return Response.json(
       {
         ok: false,
-        status: updated?.status ?? "failed",
-        progressStep: updated?.progressStep ?? "Analysis failed",
+        status: "failed",
+        progressStep: "Analysis failed",
         progressPercent: updated?.progressPercent ?? 0,
-        error: error instanceof Error ? error.message : "Analysis failed.",
+        error: errorMessage,
       },
       { status: 500 },
     );

@@ -1,0 +1,186 @@
+[
+  {
+    "relativePath": "api/index.ts",
+    "sizeBytes": 349
+  },
+  {
+    "relativePath": "backend/jest.config.js",
+    "sizeBytes": 354
+  },
+  {
+    "relativePath": "backend/package.json",
+    "sizeBytes": 969
+  },
+  {
+    "relativePath": "backend/src/app.ts",
+    "sizeBytes": 1544
+  },
+  {
+    "relativePath": "backend/src/config/database.ts",
+    "sizeBytes": 1643
+  },
+  {
+    "relativePath": "backend/src/controllers/auth.controller.ts",
+    "sizeBytes": 3677
+  },
+  {
+    "relativePath": "backend/src/controllers/campaign.controller.ts",
+    "sizeBytes": 2562
+  },
+  {
+    "relativePath": "backend/src/controllers/submission.controller.ts",
+    "sizeBytes": 3412
+  },
+  {
+    "relativePath": "backend/src/middleware/auth.middleware.ts",
+    "sizeBytes": 1432
+  },
+  {
+    "relativePath": "backend/src/middleware/db.middleware.ts",
+    "sizeBytes": 483
+  },
+  {
+    "relativePath": "backend/src/models/Campaign.ts",
+    "sizeBytes": 3122
+  },
+  {
+    "relativePath": "backend/src/models/Submission.ts",
+    "sizeBytes": 2108
+  },
+  {
+    "relativePath": "backend/src/models/User.ts",
+    "sizeBytes": 1441
+  },
+  {
+    "relativePath": "backend/src/models/index.ts",
+    "sizeBytes": 82
+  },
+  {
+    "relativePath": "backend/src/routes/auth.routes.ts",
+    "sizeBytes": 320
+  },
+  {
+    "relativePath": "backend/src/routes/campaign.routes.ts",
+    "sizeBytes": 599
+  },
+  {
+    "relativePath": "backend/src/routes/creator.routes.ts",
+    "sizeBytes": 348
+  },
+  {
+    "relativePath": "backend/src/routes/submission.routes.ts",
+    "sizeBytes": 581
+  },
+  {
+    "relativePath": "backend/src/server.ts",
+    "sizeBytes": 228
+  },
+  {
+    "relativePath": "backend/src/serverless.ts",
+    "sizeBytes": 128
+  },
+  {
+    "relativePath": "backend/src/services/campaign.service.ts",
+    "sizeBytes": 3050
+  },
+  {
+    "relativePath": "backend/src/services/payout.engine.ts",
+    "sizeBytes": 7455
+  },
+  {
+    "relativePath": "backend/src/services/submission.service.ts",
+    "sizeBytes": 7255
+  },
+  {
+    "relativePath": "backend/src/utils/auth.ts",
+    "sizeBytes": 1098
+  },
+  {
+    "relativePath": "backend/src/utils/currency.ts",
+    "sizeBytes": 286
+  },
+  {
+    "relativePath": "backend/src/validators/auth.validator.ts",
+    "sizeBytes": 747
+  },
+  {
+    "relativePath": "backend/src/validators/campaign.validator.ts",
+    "sizeBytes": 2143
+  },
+  {
+    "relativePath": "backend/src/validators/submission.validator.ts",
+    "sizeBytes": 686
+  },
+  {
+    "relativePath": "backend/src/validators/view-update.validator.ts",
+    "sizeBytes": 229
+  },
+  {
+    "relativePath": "backend/tests/payout.engine.test.ts",
+    "sizeBytes": 11236
+  },
+  {
+    "relativePath": "frontend/next-env.d.ts",
+    "sizeBytes": 262
+  },
+  {
+    "relativePath": "frontend/next.config.js",
+    "sizeBytes": 599
+  },
+  {
+    "relativePath": "frontend/package.json",
+    "sizeBytes": 790
+  },
+  {
+    "relativePath": "frontend/postcss.config.js",
+    "sizeBytes": 82
+  },
+  {
+    "relativePath": "frontend/src/app/(auth)/login/page.tsx",
+    "sizeBytes": 4467
+  },
+  {
+    "relativePath": "frontend/src/app/(auth)/signup/page.tsx",
+    "sizeBytes": 7732
+  },
+  {
+    "relativePath": "frontend/src/app/brand/page.tsx",
+    "sizeBytes": 23692
+  },
+  {
+    "relativePath": "frontend/src/app/creator/page.tsx",
+    "sizeBytes": 27557
+  },
+  {
+    "relativePath": "frontend/src/app/layout.tsx",
+    "sizeBytes": 779
+  },
+  {
+    "relativePath": "frontend/src/app/page.tsx",
+    "sizeBytes": 9944
+  },
+  {
+    "relativePath": "frontend/src/components/AuthGuard.tsx",
+    "sizeBytes": 1145
+  },
+  {
+    "relativePath": "frontend/src/components/Navbar.tsx",
+    "sizeBytes": 3791
+  },
+  {
+    "relativePath": "frontend/src/lib/api.ts",
+    "sizeBytes": 1151
+  },
+  {
+    "relativePath": "frontend/src/lib/auth-context.tsx",
+    "sizeBytes": 2524
+  },
+  {
+    "relativePath": "frontend/tailwind.config.ts",
+    "sizeBytes": 408
+  },
+  {
+    "relativePath": "package.json",
+    "sizeBytes": 813
+  }
+]
