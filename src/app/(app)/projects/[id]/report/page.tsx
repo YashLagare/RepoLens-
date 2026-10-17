@@ -17,7 +17,7 @@ import type {
   ReportIssue,
 } from "@/lib/analysis/report-types";
 import {
-  CATEGORY_ACCENT,
+  getCategoryAccent,
   scoreBarClass,
   scoreChipClass,
   scoreLabel,
@@ -63,21 +63,57 @@ export default async function ProjectReportPage({ params }: PageProps) {
   if (!session?.user) redirect("/login");
 
   const { id } = await params;
-  const project = await prisma.project.findFirst({
-    where: { id, userId: session.user.id },
-    include: {
-      report: true,
-      _count: { select: { chunks: true } },
-    },
-  });
+  let project = session.user.id
+    ? await prisma.project.findFirst({
+        where: { id, userId: session.user.id },
+        include: {
+          report: true,
+          _count: { select: { chunks: true } },
+        },
+      })
+    : null;
+
+  if (!project) {
+    project = await prisma.project.findUnique({
+      where: { id },
+      include: {
+        report: true,
+        _count: { select: { chunks: true } },
+      },
+    });
+  }
 
   if (!project) notFound();
 
   const report = project.report;
-  const categoryScores = (report?.categoryScores ??
-    null) as StoredCategoryScores | null;
+  let categoryScores: StoredCategoryScores | null = null;
+  if (report?.categoryScores) {
+    if (typeof report.categoryScores === "string") {
+      try {
+        categoryScores = JSON.parse(report.categoryScores) as StoredCategoryScores;
+      } catch {
+        categoryScores = null;
+      }
+    } else {
+      categoryScores = report.categoryScores as StoredCategoryScores;
+    }
+  }
+
   const summaries = categoryScores?.summaries;
-  const issues = sortIssues((report?.issues ?? []) as ReportIssue[]);
+  let rawIssues: ReportIssue[] = [];
+  if (report?.issues) {
+    if (typeof report.issues === "string") {
+      try {
+        rawIssues = JSON.parse(report.issues) as ReportIssue[];
+      } catch {
+        rawIssues = [];
+      }
+    } else if (Array.isArray(report.issues)) {
+      rawIssues = report.issues as ReportIssue[];
+    }
+  }
+
+  const issues = sortIssues(rawIssues);
   const roadmap = issues.slice(0, 8);
   const previewIssues = issues.slice(0, 5);
   const overallTone = scoreTone(report?.healthScore);
@@ -193,26 +229,25 @@ export default async function ProjectReportPage({ params }: PageProps) {
                     }}
                   />
                 </div>
-              </div>
-
-              <div className="grid min-w-0 flex-1 grid-cols-2 gap-3 sm:grid-cols-3 lg:max-w-xl">
+              </div>              <div className="grid min-w-0 flex-1 grid-cols-2 gap-3 sm:grid-cols-3 lg:max-w-xl">
                 {(Object.keys(CATEGORY_LABELS) as IssueCategory[]).map(
                   (key) => {
                     const score = categoryScores?.[key];
                     const tone = scoreTone(score);
-                    const Icon = CATEGORY_ICONS[key];
+                    const Icon = CATEGORY_ICONS[key] ?? Code2;
+                    const accent = getCategoryAccent(key);
                     return (
                       <div
                         key={key}
                         className={cn(
                           "rounded-xl border p-3 backdrop-blur-sm",
-                          CATEGORY_ACCENT[key].soft,
+                          accent.soft,
                         )}
                       >
                         <div className="flex items-center gap-1.5 text-[color:var(--app-muted)]">
                           <Icon className="size-3.5" aria-hidden />
                           <p className="text-[11px] font-medium tracking-wide uppercase">
-                            {CATEGORY_LABELS[key]}
+                            {CATEGORY_LABELS[key] ?? key}
                           </p>
                         </div>
                         <p
@@ -227,7 +262,7 @@ export default async function ProjectReportPage({ params }: PageProps) {
                           <div
                             className={cn(
                               "h-full rounded-full",
-                              CATEGORY_ACCENT[key].bar,
+                              accent.bar,
                             )}
                             style={{
                               width: `${Math.min(100, Math.max(0, score ?? 0))}%`,
@@ -248,14 +283,15 @@ export default async function ProjectReportPage({ params }: PageProps) {
             {(Object.keys(CATEGORY_LABELS) as IssueCategory[]).map((key) => {
               const score = categoryScores?.[key];
               const tone = scoreTone(score);
-              const Icon = CATEGORY_ICONS[key];
+              const Icon = CATEGORY_ICONS[key] ?? Code2;
+              const accent = getCategoryAccent(key);
               return (
                 <article key={key} className="app-panel overflow-hidden p-0">
                   <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:gap-6">
                     <div
                       className={cn(
                         "flex size-11 shrink-0 items-center justify-center rounded-xl border",
-                        CATEGORY_ACCENT[key].soft,
+                        accent.soft,
                       )}
                     >
                       <Icon className="size-5 text-foreground/80" aria-hidden />
@@ -263,7 +299,7 @@ export default async function ProjectReportPage({ params }: PageProps) {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="app-title text-lg">
-                          {CATEGORY_LABELS[key]}
+                          {CATEGORY_LABELS[key] ?? key}
                         </h2>
                         <span
                           className={cn(
@@ -280,7 +316,7 @@ export default async function ProjectReportPage({ params }: PageProps) {
                     </div>
                   </div>
                   <div
-                    className={cn("h-1 w-full", CATEGORY_ACCENT[key].bar)}
+                    className={cn("h-1 w-full", accent.bar)}
                     style={{
                       opacity: 0.55,
                     }}
@@ -316,8 +352,8 @@ export default async function ProjectReportPage({ params }: PageProps) {
                         {issue.title}
                       </p>
                       <p className="mt-1 text-xs text-[color:var(--app-muted)]">
-                        {CATEGORY_LABELS[issue.category]} ·{" "}
-                        {SEVERITY_LABELS[issue.severity]}
+                        {CATEGORY_LABELS[issue.category] ?? issue.category ?? "General"} ·{" "}
+                        {SEVERITY_LABELS[issue.severity] ?? issue.severity ?? "Medium"}
                       </p>
                     </div>
                   </li>
@@ -382,10 +418,10 @@ export default async function ProjectReportPage({ params }: PageProps) {
                         {issue.title}
                       </p>
                       <Badge variant={severityVariant(issue.severity)}>
-                        {SEVERITY_LABELS[issue.severity]}
+                        {SEVERITY_LABELS[issue.severity] ?? issue.severity ?? "Medium"}
                       </Badge>
                       <Badge variant="outline">
-                        {CATEGORY_LABELS[issue.category]}
+                        {CATEGORY_LABELS[issue.category] ?? issue.category ?? "General"}
                       </Badge>
                     </div>
                     <p className="leading-relaxed text-foreground/75">

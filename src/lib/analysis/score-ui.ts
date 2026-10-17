@@ -86,3 +86,13 @@ export const CATEGORY_ACCENT: Record<
     soft: "border-indigo-500/20 bg-indigo-500/8",
   },
 };
+
+const DEFAULT_ACCENT = {
+  bar: "bg-cyan-500",
+  soft: "border-cyan-500/20 bg-cyan-500/8",
+};
+
+export function getCategoryAccent(category?: string | null): { bar: string; soft: string } {
+  if (!category || !(category in CATEGORY_ACCENT)) return DEFAULT_ACCENT;
+  return CATEGORY_ACCENT[category as IssueCategory];
+}

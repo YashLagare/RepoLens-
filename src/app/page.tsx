@@ -313,9 +313,19 @@ export default function HomePage() {
       <footer className="border-t border-(--landing-line) px-6 py-8 text-sm text-(--landing-muted) sm:px-10">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
           <p className="landing-brand text-(--landing-ink)">
-            RepoLens
+            © 2026 RepoLens
           </p>
-          <p>Next.js · RAG · Groq · pgvector</p>
+          <p>
+            Developed by{" "}
+            <a
+              href="https://portfolio-five-opal-53.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-(--landing-ink) underline-offset-4 hover:underline"
+            >
+              Yash
+            </a>
+          </p>
         </div>
       </footer>
     </div>

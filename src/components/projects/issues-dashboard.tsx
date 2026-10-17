@@ -118,10 +118,10 @@ export function IssuesDashboard({
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <h2 className="font-medium">{issue.title}</h2>
                 <Badge variant={severityVariant(issue.severity)}>
-                  {SEVERITY_LABELS[issue.severity]}
+                  {SEVERITY_LABELS[issue.severity] ?? issue.severity ?? "Medium"}
                 </Badge>
                 <Badge variant="outline">
-                  {CATEGORY_LABELS[issue.category]}
+                  {CATEGORY_LABELS[issue.category] ?? issue.category ?? "General"}
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground">

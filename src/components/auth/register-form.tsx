@@ -24,7 +24,7 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="space-y-8">
+    <div className="w-full space-y-8">
       <div className="space-y-2">
         <h2 className="text-3xl font-semibold tracking-tight">
           Sign Up Account
@@ -34,8 +34,8 @@ export function RegisterForm() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <form action={loginWithGoogle}>
+      <div className="grid w-full grid-cols-2 gap-3">
+        <form action={loginWithGoogle} className="w-full">
           <Button
             type="submit"
             variant="outline"
@@ -45,7 +45,7 @@ export function RegisterForm() {
             Google
           </Button>
         </form>
-        <form action={loginWithGithub}>
+        <form action={loginWithGithub} className="w-full">
           <Button
             type="submit"
             variant="outline"
@@ -63,7 +63,7 @@ export function RegisterForm() {
         <div className="h-px flex-1 bg-border" />
       </div>
 
-      <form action={formAction} className="space-y-4">
+      <form action={formAction} className="w-full space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="firstName">First Name</Label>

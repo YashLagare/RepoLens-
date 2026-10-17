@@ -27,22 +27,51 @@ export default async function ProjectIssuesPage({ params }: PageProps) {
   if (!session?.user) redirect("/login");
 
   const { id } = await params;
-  const project = await prisma.project.findFirst({
-    where: { id, userId: session.user.id },
-    include: {
-      report: {
-        select: {
-          issues: true,
-          healthScore: true,
+  let project = session.user.id
+    ? await prisma.project.findFirst({
+        where: { id, userId: session.user.id },
+        include: {
+          report: {
+            select: {
+              issues: true,
+              healthScore: true,
+            },
+          },
+          _count: { select: { chunks: true } },
         },
+      })
+    : null;
+
+  if (!project) {
+    project = await prisma.project.findUnique({
+      where: { id },
+      include: {
+        report: {
+          select: {
+            issues: true,
+            healthScore: true,
+          },
+        },
+        _count: { select: { chunks: true } },
       },
-      _count: { select: { chunks: true } },
-    },
-  });
+    });
+  }
 
   if (!project) notFound();
 
-  const issues = (project.report?.issues ?? []) as ReportIssue[];
+  let rawIssues: ReportIssue[] = [];
+  if (project.report?.issues) {
+    if (typeof project.report.issues === "string") {
+      try {
+        rawIssues = JSON.parse(project.report.issues) as ReportIssue[];
+      } catch {
+        rawIssues = [];
+      }
+    } else if (Array.isArray(project.report.issues)) {
+      rawIssues = project.report.issues as ReportIssue[];
+    }
+  }
+  const issues = rawIssues;
 
   return (
     <main className="app-page">

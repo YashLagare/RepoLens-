@@ -24,7 +24,7 @@ export const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as IssueCategory[];
 export const ALL_SEVERITIES = Object.keys(SEVERITY_LABELS) as IssueSeverity[];
 
 export function severityVariant(
-  severity: IssueSeverity,
+  severity?: IssueSeverity | string,
 ): "destructive" | "secondary" | "outline" {
   if (severity === "critical" || severity === "high") return "destructive";
   if (severity === "medium") return "secondary";
@@ -32,11 +32,15 @@ export function severityVariant(
 }
 
 export function sortIssues(issues: ReportIssue[]): ReportIssue[] {
+  if (!Array.isArray(issues)) return [];
   return [...issues].sort((a, b) => {
-    const severityDiff =
-      SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity];
+    const orderA = a?.severity && SEVERITY_ORDER[a.severity] !== undefined ? SEVERITY_ORDER[a.severity] : 99;
+    const orderB = b?.severity && SEVERITY_ORDER[b.severity] !== undefined ? SEVERITY_ORDER[b.severity] : 99;
+    const severityDiff = orderA - orderB;
     if (severityDiff !== 0) return severityDiff;
-    return a.category.localeCompare(b.category);
+    const catA = String(a?.category ?? "");
+    const catB = String(b?.category ?? "");
+    return catA.localeCompare(catB);
   });
 }
 

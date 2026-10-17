@@ -25,7 +25,7 @@ export function AuthShell({ children, mode }: AuthShellProps) {
 
   return (
     <div className="auth-shell flex min-h-svh items-center justify-center bg-background p-3 text-foreground sm:p-5">
-      <div className="auth-frame relative grid min-h-[min(900px,calc(100svh-2.5rem))] w-full max-w-[1180px] overflow-hidden rounded-[1.75rem] border border-border bg-card lg:grid-cols-[0.95fr_1.05fr]">
+      <div className="auth-frame relative grid min-h-[min(900px,calc(100svh-2.5rem))] w-full max-w-6xl overflow-hidden rounded-[1.75rem] border border-border bg-card lg:grid-cols-[0.9fr_1.1fr]">
         <aside className="auth-panel relative hidden overflow-hidden lg:flex lg:flex-col">
           <div className="auth-panel-noise pointer-events-none absolute inset-0" />
           <div className="relative z-10 flex h-full flex-col justify-between p-8 xl:p-10">
@@ -93,8 +93,8 @@ export function AuthShell({ children, mode }: AuthShellProps) {
             <ThemeToggle />
           </div>
 
-          <div className="flex flex-1 items-center justify-center px-5 py-16 sm:px-10">
-            <div className="w-full max-w-[420px]">{children}</div>
+          <div className="flex flex-1 items-center justify-center px-6 py-12 sm:px-12 lg:px-16">
+            <div className="w-full max-w-xl xl:max-w-2xl">{children}</div>
           </div>
         </section>
       </div>
