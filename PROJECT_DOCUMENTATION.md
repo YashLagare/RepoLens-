@@ -72,7 +72,7 @@ Engineering teams, technical leads, and code reviewers frequently spend hours na
 
 ## 1 Executive Summary
 
-RepoLens is a developer tool built with Next.js 16, React 19, TypeScript, PostgreSQL (`pgvector`), and Prisma. It automates the extraction, AST parsing (Tree-sitter), vector embedding (`@xenova/transformers` all-MiniLM-L6-v2), and LLM-assisted review (Groq) of JavaScript and TypeScript repositories.
+RepoLens is a developer tool built with Next.js 16, React 19, TypeScript, PostgreSQL (`pgvector`), and Prisma. It automates the extraction, AST parsing (Tree-sitter), vector embedding (`@xenova/transformers` all-MiniLM-L6-v2), and LLM-assisted review (OpenRouter with Groq fallback) of JavaScript and TypeScript repositories.
 
 The system computes category health scores across architecture, security, performance, code quality, and testing by combining static heuristics with structured LLM review. It surfaces prioritized issue lists and exposes a RAG-backed conversational interface alongside an interactive code explorer. User identity is managed via Auth.js (supporting Google OAuth, GitHub OAuth, and email/password credentials), and subscription billing is handled through Stripe.
 
@@ -84,19 +84,20 @@ The system computes category health scores across architecture, security, perfor
 Provide automated static analysis, structural code chunking, and contextual conversational querying for JavaScript and TypeScript repositories without requiring external embedding APIs or sending unchunked repository archives to LLMs.
 
 ### Scope
-- Parsing and chunking `.js`, `.jsx`, `.ts`, and `.tsx` source files.
+- Parsing and chunking `.js`, `.jsx`, `.ts`, and `.tsx` source files with architectural relevance prioritization.
 - Filtering build artifacts, dependencies, and binary assets (`node_modules`, `.git`, `.next`, `dist`, `build`, `coverage`, lockfiles).
-- Local 384-dimensional vector embedding generation.
+- Local 384-dimensional vector embedding generation with direct tensor inference.
 - Cosine similarity vector search inside PostgreSQL using the `pgvector` extension.
-- Structured LLM evaluation for category summaries and prioritized issues.
+- Structured LLM evaluation for category summaries and prioritized issues via OpenRouter (`meta-llama/llama-3.3-70b-instruct`) or Groq.
 - Streaming conversational assistant with metadata-linked source citations.
 
 ### Primary Modules
 1. **Ingestion & Extraction Engine**: GitHub API zipball streaming and JSZip decompression with size constraints.
-2. **Parser & Chunking Pipeline**: Tree-sitter-based structural AST parsing and boundary-aware chunking.
-3. **Vector & RAG Subsystem**: Local MiniLM embedding pipeline with PostgreSQL vector distance querying (`<=>`).
-4. **Health Review Engine**: Deterministic static metric extraction combined with structured LLM review via Groq (`llama-3.3-70b-versatile`).
+2. **Parser & Chunking Pipeline**: Tree-sitter-based structural AST parsing, architectural file scoring (`getFileRelevanceScore`), and a 75-chunk high-signal budget per project.
+3. **Vector & RAG Subsystem**: Local MiniLM embedding pipeline with direct tensor inference and PostgreSQL vector distance querying (`<=>`).
+4. **Health Review Engine**: Deterministic static metric extraction combined with structured LLM review via OpenRouter (`meta-llama/llama-3.3-70b-instruct`) with Groq fallback.
 5. **Subscription & Quota Manager**: Stripe billing integration with daily analysis quotas and rate limiting.
+6. **Project Management & Deletion**: Dedicated REST endpoints with relational transaction cascades for project and chunk deletion.
 
 ### Target Audience & Use Cases
 - **Repository Audits**: Evaluating third-party or legacy codebases prior to refactoring or integration.
@@ -130,7 +131,7 @@ Provide automated static analysis, structural code chunking, and contextual conv
 ### AI & Analysis
 | Layer | Technology | Purpose |
 |---|---|---|
-| **LLM Inference** | Groq (via `@ai-sdk/groq`) | LLM inference for health review and chat |
+| **LLM Inference** | OpenRouter (`@openrouter/ai-sdk-provider`) with Groq (`@ai-sdk/groq`) fallback | Multi-provider LLM inference for health review and chat |
 | **AI Framework** | Vercel AI SDK (`ai`, `@ai-sdk/react`) | Structured object generation and streaming UI responses |
 | **Embeddings** | `@xenova/transformers` (`all-MiniLM-L6-v2`) | Local 384-dimensional vector embeddings |
 | **Parsing** | Tree-sitter (`tree-sitter-javascript`, `tree-sitter-typescript`) | Concrete syntax tree parsing and code block boundary extraction |
@@ -186,7 +187,7 @@ The application is structured as a full-stack Next.js system. Analysis is execut
 |                       |  - Tree-sitter JS/TS Parser           |                                  |
 |                       |  - JSZip Archive Extraction           |                                  |
 |                       |  - MiniLM Embedder (@xenova)          |                                  |
-|                       |  - Vercel AI SDK + Groq LLM Driver    |                                  |
+|                       |  - OpenRouter / Groq LLM Driver       |                                  |
 |                       +-------------------+-------------------+                                  |
 +-------------------------------------------|------------------------------------------------------+
                                             |
@@ -197,7 +198,7 @@ The application is structured as a full-stack Next.js system. Analysis is execut
 |     External Cloud Services       |     |   PostgreSQL Database (Neon/pg)   |
 |                                   |     |                                   |
 |  +-----------------------------+  |     |  +-----------------------------+  |
-|  | Groq API (Inference Engine) |  |     |  | Users, Accounts, Sessions   |  |
+|  | OpenRouter / Groq APIs      |  |     |  | Users, Accounts, Sessions   |  |
 |  +-----------------------------+  |     |  +-----------------------------+  |
 |  | GitHub API (Zipball Stream) |  |     |  | Projects & Reports (JSON)   |  |
 |  +-----------------------------+  |     |  +-----------------------------+  |
@@ -242,7 +243,7 @@ RepoLens/
 │   ├── generated/               # Generated Prisma client output
 │   ├── lib/
 │   │   ├── actions/             # Next.js Server Actions (auth, analysis, billing, github)
-│   │   ├── ai/                  # Groq client instantiation and model configurations
+│   │   ├── ai/                  # OpenRouter & Groq client instantiation and model configurations
 │   │   ├── analysis/            # Analysis pipeline, chunking, embeddings, metrics, RAG
 │   │   ├── billing/             # Stripe utilities, entitlements, plan limit constants
 │   │   ├── files/               # Extraction, framework detection, path filtering, storage
@@ -274,8 +275,9 @@ RepoLens/
 
 ### 2. AST-Aware Code Chunking & Local Embeddings
 - **Syntax Parsing**: Uses Tree-sitter (`tree-sitter-javascript`, `tree-sitter-typescript`) to parse ASTs and split source code along logical declarations (functions, classes, methods, type aliases, exports).
+- **Architectural Prioritization**: Scores files via `getFileRelevanceScore` to prioritize core application logic (`src/app/`, `components/`, `lib/`, `api/`) over config and utility files within a 75-chunk high-signal budget per project.
 - **Chunk Sizing**: Targets 200–400 tokens per chunk with fallback linear splitting for oversized files and merging for small adjacent nodes.
-- **Local Embedding**: Generates 384-dimensional vector embeddings using `@xenova/transformers` (`all-MiniLM-L6-v2`) in batches of 16 locally in the Node.js process.
+- **Local Embedding**: Generates 384-dimensional vector embeddings using `@xenova/transformers` (`all-MiniLM-L6-v2`) in batches of 16 locally in the Node.js process using direct tensor inference.
 - **PostgreSQL Vector Persistence**: Inserts embeddings into `CodeChunk.embedding` as `vector(384)` for similarity searches.
 
 ### 3. Codebase Health Review & Issue Generation
@@ -284,7 +286,7 @@ RepoLens/
   - Scans for regex-based secret patterns (API keys, JWT secret literals, AWS access keys).
   - Computes approximate test coverage by matching test file names to source paths.
 - **Structured LLM Review**:
-  - Samples up to 24 code chunks and sends them to Groq (`llama-3.3-70b-versatile`) via `generateObject` with a strict Zod schema for architecture, security, and performance findings.
+  - Samples up to 24 prioritized code chunks and sends them to OpenRouter (`meta-llama/llama-3.3-70b-instruct`) with automatic Groq (`llama-3.3-70b-versatile`) fallback via `generateObject` with a strict Zod schema for architecture, security, and performance findings.
 - **Score Calculation**:
   - Computes category scores (0–100) by subtracting severity penalties (`critical: 18`, `high: 10`, `medium: 4`, `low: 1`) from category baselines.
   - Computes overall health score as the arithmetic mean of the five category scores.
@@ -641,7 +643,8 @@ Authentication is powered by Auth.js (NextAuth v5 beta) configured with JWT sess
 | Service | Purpose | Implementation Detail |
 |---|---|---|
 | **PostgreSQL (Neon)** | Database & Vector Store | Connected via `@prisma/adapter-pg` using pg connection pool with `vector` extension. |
-| **Groq Cloud** | LLM Inference | `@ai-sdk/groq` using `llama-3.3-70b-versatile` for health review and chat. |
+| **OpenRouter Cloud** | Primary LLM Inference | `@openrouter/ai-sdk-provider` using `meta-llama/llama-3.3-70b-instruct` for health review and chat. |
+| **Groq Cloud** | Fallback LLM Inference | `@ai-sdk/groq` using `llama-3.3-70b-versatile` as fallback when Groq key is used. |
 | **Google Cloud OAuth** | User Authentication | Configured in Auth.js Google Provider. |
 | **GitHub REST API** | Authentication & Repo Ingestion | OAuth flow and authenticated zipball archive streaming (`https://api.github.com/repos/{owner}/{repo}/zipball`). |
 | **Stripe** | Subscription Billing | Node SDK for checkout sessions, portal sessions, and webhook processing. |
@@ -659,9 +662,12 @@ Authentication is powered by Auth.js (NextAuth v5 beta) configured with JWT sess
 | `GOOGLE_CLIENT_SECRET` | Optional | Google OAuth Client Secret |
 | `GITHUB_CLIENT_ID` | Optional | GitHub OAuth Application Client ID |
 | `GITHUB_CLIENT_SECRET` | Optional | GitHub OAuth Application Client Secret |
-| `GROQ_API_KEY` | Yes | Groq API Key for LLM chat and report generation |
-| `GROQ_MODEL` | No | Model override for chat (Default: `llama-3.3-70b-versatile`) |
-| `GROQ_STRUCTURED_MODEL`| No | Model override for structured review (Default: `llama-3.3-70b-versatile`) |
+| `OPENROUTER_API_KEY` | Recommended | Primary API key for high-throughput LLM analysis and chat |
+| `OPENROUTER_MODEL` | No | OpenRouter model override (Default: `meta-llama/llama-3.3-70b-instruct`) |
+| `OPENROUTER_STRUCTURED_MODEL` | No | OpenRouter structured model override (Default: `meta-llama/llama-3.3-70b-instruct`) |
+| `GROQ_API_KEY` | Fallback | Groq API Key for LLM chat and report generation (fallback provider) |
+| `GROQ_MODEL` | No | Groq model override for chat (Default: `llama-3.3-70b-versatile`) |
+| `GROQ_STRUCTURED_MODEL`| No | Groq model override for structured review (Default: `llama-3.3-70b-versatile`) |
 | `STRIPE_SECRET_KEY` | Optional | Stripe Secret API Key |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Optional | Stripe Publishable Key for checkout |
 | `STRIPE_PRICE_PREMIUM` | Optional | Stripe Recurring Price ID for Premium plan |
@@ -675,10 +681,11 @@ Authentication is powered by Auth.js (NextAuth v5 beta) configured with JWT sess
 |---|---|
 | `next` | Core App Router framework, SSR, Server Actions, and API routes |
 | `react` / `react-dom` | React 19 UI component tree |
+| `@openrouter/ai-sdk-provider` | OpenRouter provider integration for Vercel AI SDK |
+| `@ai-sdk/groq` & `ai` | Vercel AI SDK integration for Groq inference and streaming |
 | `@prisma/client` & `prisma` | Database schema modeling and ORM queries |
 | `@prisma/adapter-pg` & `pg` | PostgreSQL driver adapter with connection pooling |
 | `next-auth` (`@auth/prisma-adapter`) | Authentication and session persistence |
-| `@ai-sdk/groq` & `ai` | Vercel AI SDK integration for Groq inference and streaming |
 | `@xenova/transformers` | Local Node.js pipeline for MiniLM embeddings |
 | `tree-sitter`, `tree-sitter-javascript`, `tree-sitter-typescript` | Syntax parsing for code-aware chunking |
 | `jszip` | In-memory ZIP archive decompression |
@@ -747,9 +754,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
                  |                                         |
                  v                                         v
 +----------------------------------+     +----------------------------------+
-|      Neon Serverless Postgres    |     |          Groq Cloud LLM          |
+|      Neon Serverless Postgres    |     |      OpenRouter / Groq LLM       |
 |  - Relational Models             |     |  - High-Speed Inference Engine   |
-|  - pgvector Cosine Query (<=>)   |     |  - llama-3.3-70b-versatile       |
+|  - pgvector Cosine Query (<=>)   |     |  - Llama 3.3 70B                 |
 +----------------------------------+     +----------------------------------+
 ```
 
@@ -777,7 +784,7 @@ Next.js Route Handler (/api/chat)
        |
        +---> Construct Grounded System Prompt
        |
-       +---> Stream Groq LLM Inference (streamText)
+       +---> Stream OpenRouter / Groq LLM Inference (streamText)
        |
        v
 SSE Stream to Client with Cited Sources

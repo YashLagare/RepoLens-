@@ -31,7 +31,7 @@ const FLOW = [
   {
     step: "03",
     title: "Ask, review, improve",
-    text: "Chat with citations, scan a health report, and walk a priority roadmap of issues.",
+    text: "Chat with citations, scan a health report, and inspect prioritized code issues.",
   },
 ];
 
@@ -46,7 +46,7 @@ const OUTCOMES = [
   },
   {
     title: "Issues & roadmap",
-    text: "Filter findings by severity and category, then tackle what matters first.",
+    text: "Filter findings by severity and category, inspect file locations, and address critical risks.",
   },
 ];
 
@@ -132,7 +132,7 @@ export default function HomePage() {
               AI-Powered Codebase Analysis & RAG Platform
             </p>
             <p className="landing-reveal landing-reveal-delay-3 mt-5 max-w-md text-base leading-relaxed text-(--landing-muted) sm:text-lg">
-              Connect a project, get a health report, and ask precise questions
+              Connect a JavaScript or TypeScript repository, get an architectural health report, and ask precise questions
               grounded in your real code.
             </p>
             <div className="landing-reveal landing-reveal-delay-4 mt-10 flex flex-wrap items-center gap-3">
@@ -169,9 +169,7 @@ export default function HomePage() {
             </h2>
           </div>
           <p className="max-w-md text-base leading-relaxed text-(--landing-muted) sm:text-lg">
-            Static linters catch patterns. This product builds a searchable
-            understanding of your codebase — then reasons over it like a senior
-            engineer sitting beside you.
+            Static linters only flag surface syntax rules. RepoLens parses AST structures, computes local vector embeddings, and uses AI reasoning to evaluate architecture, security, performance, code quality, and test coverage with direct file citations.
           </p>
         </div>
       </section>
@@ -211,11 +209,10 @@ export default function HomePage() {
       >
         <div className="mx-auto max-w-6xl">
           <h2 className="landing-title text-3xl sm:text-5xl">
-            Built for real review sessions
+            Built for real code reviews
           </h2>
           <p className="mt-5 max-w-xl text-base text-(--landing-muted) sm:text-lg">
-            Everything a course viewer expects to demo — and a developer wants
-            to keep using.
+            Actionable health scores, grounded conversational search, and categorized findings engineered for modern engineering workflows.
           </p>
           <div className="mt-14 grid gap-x-10 gap-y-12 border-t border-(--landing-line) pt-12 md:grid-cols-3">
             {OUTCOMES.map((item) => (
@@ -233,11 +230,10 @@ export default function HomePage() {
       <section id="demo" className="scroll-mt-28 px-6 py-24 sm:px-10">
         <div className="mx-auto max-w-6xl">
           <h2 className="landing-title text-3xl sm:text-5xl">
-            A product you can show on camera
+            Interactive codebase intelligence
           </h2>
           <p className="mt-5 max-w-xl text-base text-(--landing-muted) sm:text-lg">
-            Progress, report, chat, and explorer — the full loop looks polished
-            in a YouTube walkthrough.
+            Real-time pipeline progress, category health scores, syntax-highlighted code explorer, and grounded AI chat working seamlessly together.
           </p>
 
           <div className="landing-demo mt-12 overflow-hidden rounded-3xl p-6 text-white sm:p-10">
@@ -286,11 +282,11 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <h2 className="landing-title text-3xl text-white sm:text-5xl">
-              Build it. Demo it. Ship the understanding.
+              Understand your codebase. Ship with confidence.
             </h2>
             <p className="mt-5 text-base leading-relaxed text-white/65 sm:text-lg">
-              Free to try with daily analysis limits. Upgrade to Premium in
-              Settings when you need more runs, projects, and chat capacity.
+              Free to get started with daily analysis credits. Upgrade to Premium in
+              Settings for higher analysis limits, unlimited projects, and expanded chat throughput.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -313,9 +309,22 @@ export default function HomePage() {
       <footer className="border-t border-(--landing-line) px-6 py-8 text-sm text-(--landing-muted) sm:px-10">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
           <p className="landing-brand text-(--landing-ink)">
-            RepoLens
+            © 2026 RepoLens
           </p>
-          <p>Next.js · RAG · Groq · pgvector</p>
+          <p className="text-xs text-(--landing-muted)">
+            Advisory code health insights for JavaScript & TypeScript. Not a formal security certification.
+          </p>
+          <p>
+            Developed by{" "}
+            <a
+              href="https://portfolio-five-opal-53.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-(--landing-ink) underline-offset-4 hover:underline"
+            >
+              Yash
+            </a>
+          </p>
         </div>
       </footer>
     </div>

@@ -18,8 +18,8 @@ export function ZipUploadForm() {
   );
 
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="space-y-2">
+    <form action={formAction} className="w-full space-y-4">
+      <div className="w-full space-y-2">
         <Label htmlFor="file">ZIP file</Label>
         <Input
           id="file"
