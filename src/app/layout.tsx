@@ -26,6 +26,10 @@ export const metadata: Metadata = {
   title: "RepoLens — AI-Powered Codebase Analysis",
   description:
     "Analyze JavaScript and TypeScript repositories, identify codebase issues, explore source files, and ask grounded questions using RAG-powered code retrieval.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
