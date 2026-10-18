@@ -1,4 +1,6 @@
+import { BrandIcon } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { auth } from "@/lib/auth";
 import Link from "next/link";
 
 const CODE_LINES = [
@@ -77,7 +79,10 @@ function CodePlane() {
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await auth();
+  const isAuthenticated = Boolean(session?.user);
+
   return (
     <div className="landing-shell">
       <section id="top" className="landing-hero">
@@ -87,9 +92,10 @@ export default function HomePage() {
           <header className="landing-header landing-reveal flex items-center justify-between gap-3 rounded-2xl px-4 py-3 sm:gap-4 sm:px-5">
             <a
               href="#top"
-              className="landing-brand shrink-0 text-sm text-(--landing-ink)"
+              className="landing-brand inline-flex items-center gap-2 shrink-0 text-sm text-(--landing-ink)"
             >
-              RepoLens
+              <BrandIcon size="sm" variant="landing" />
+              <span>RepoLens</span>
             </a>
             <nav
               aria-label="Landing sections"
@@ -107,18 +113,29 @@ export default function HomePage() {
             </nav>
             <div className="flex shrink-0 items-center gap-2 text-sm sm:gap-3">
               <ThemeToggle className="border-(--landing-line) bg-transparent hover:bg-(--landing-fog)" />
-              <Link
-                href="/login"
-                className="text-(--landing-muted) transition-colors hover:text-(--landing-ink)"
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/register"
-                className="rounded-xl bg-(--landing-ink) px-3.5 py-2 font-medium text-(--landing-paper) transition-opacity hover:opacity-90"
-              >
-                Get started
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  href="/dashboard"
+                  className="rounded-xl bg-(--landing-ink) px-3.5 py-2 font-medium text-(--landing-paper) transition-opacity hover:opacity-90"
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="text-(--landing-muted) transition-colors hover:text-(--landing-ink)"
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="rounded-xl bg-(--landing-ink) px-3.5 py-2 font-medium text-(--landing-paper) transition-opacity hover:opacity-90"
+                  >
+                    Get started
+                  </Link>
+                </>
+              )}
             </div>
           </header>
         </div>
@@ -137,10 +154,10 @@ export default function HomePage() {
             </p>
             <div className="landing-reveal landing-reveal-delay-4 mt-10 flex flex-wrap items-center gap-3">
               <Link
-                href="/login"
+                href={isAuthenticated ? "/dashboard" : "/login"}
                 className="landing-btn-primary rounded-xl px-5 py-3.5 text-sm font-semibold"
               >
-                Analyze My Repository
+                {isAuthenticated ? "Go to Dashboard" : "Analyze My Repository"}
               </Link>
               <a
                 href="#demo"
@@ -290,27 +307,41 @@ export default function HomePage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link
-              href="/register"
-              className="landing-btn-primary rounded-xl px-5 py-3.5 text-sm font-semibold"
-            >
-              Create Account
-            </Link>
-            <Link
-              href="/login"
-              className="rounded-xl border border-white/20 px-5 py-3.5 text-sm font-semibold text-white transition-colors hover:border-white"
-            >
-              Analyze My Repository
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                href="/dashboard"
+                className="landing-btn-primary rounded-xl px-5 py-3.5 text-sm font-semibold"
+              >
+                Go to Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/register"
+                  className="landing-btn-primary rounded-xl px-5 py-3.5 text-sm font-semibold"
+                >
+                  Create Account
+                </Link>
+                <Link
+                  href="/login"
+                  className="rounded-xl border border-white/20 px-5 py-3.5 text-sm font-semibold text-white transition-colors hover:border-white"
+                >
+                  Analyze My Repository
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
 
       <footer className="border-t border-(--landing-line) px-6 py-8 text-sm text-(--landing-muted) sm:px-10">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
-          <p className="landing-brand text-(--landing-ink)">
-            © 2026 RepoLens
-          </p>
+          <div className="flex items-center gap-2">
+            <BrandIcon size="sm" variant="landing" />
+            <p className="landing-brand text-(--landing-ink)">
+              © 2026 RepoLens
+            </p>
+          </div>
           <p className="text-xs text-(--landing-muted)">
             Advisory code health insights for JavaScript & TypeScript. Not a formal security certification.
           </p>

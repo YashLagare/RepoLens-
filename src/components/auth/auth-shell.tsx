@@ -1,3 +1,4 @@
+import { BrandIcon } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -33,9 +34,7 @@ export function AuthShell({ children, mode }: AuthShellProps) {
               href="/"
               className="inline-flex items-center gap-2.5 text-white"
             >
-              <span className="flex size-8 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25">
-                <span className="size-2.5 rounded-full bg-white" />
-              </span>
+              <BrandIcon size="lg" variant="white" />
               <span className="text-sm font-semibold tracking-tight">
                 RepoLens
               </span>

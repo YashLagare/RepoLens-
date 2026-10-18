@@ -1,6 +1,7 @@
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { NavPlanUsage } from "@/components/billing/nav-plan-usage";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { BrandIcon } from "@/components/brand-logo";
 import { buttonVariants } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -22,9 +23,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               href="/dashboard"
               className="app-brand inline-flex items-center gap-2.5"
             >
-              <span className="flex size-7 items-center justify-center rounded-full bg-[color:var(--app-accent)]/15 ring-1 ring-[color:var(--app-accent)]/35">
-                <span className="size-2 rounded-full bg-[color:var(--app-accent)]" />
-              </span>
+              <BrandIcon size="md" variant="accent" />
               <span className="hidden text-sm font-semibold tracking-tight sm:inline">
                 RepoLens
               </span>
