@@ -1,16 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
-import { Loader2, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type MouseEvent, useState } from "react";
 import { toast } from "sonner";
@@ -116,58 +109,29 @@ export function DeleteProjectButton({
         </Button>
       )}
 
-      <Dialog
+      <ConfirmDialog
         open={open}
         onOpenChange={(next) => {
           if (!pending) setOpen(next);
         }}
-      >
-        <DialogContent showCloseButton={!pending}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <Trash2 className="size-5 shrink-0" />
-              Delete project?
-            </DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed text-[color:var(--app-muted)]">
-              Are you sure you want to delete{" "}
-              <span className="font-semibold text-foreground">
-                {projectName}
-              </span>
-              ? All source files, vector chunks, and generated health reports
-              will be permanently removed. This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={pending}
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpen(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              disabled={pending}
-              onClick={handleConfirmDelete}
-            >
-              {pending ? (
-                <>
-                  <Loader2 className="mr-1.5 size-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                "Delete project"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        variant="destructive"
+        loading={pending}
+        title="Delete repository?"
+        description={
+          <>
+            Are you sure you want to delete{" "}
+            <span className="font-semibold text-foreground">
+              {projectName}
+            </span>{" "}
+            and its vector embeddings? All source files, parsed AST chunks, and
+            generated health reports will be permanently removed. This action
+            cannot be undone.
+          </>
+        }
+        confirmLabel="Delete repository"
+        cancelLabel="Keep repository"
+        onConfirm={handleConfirmDelete}
+      />
     </>
   );
 }
