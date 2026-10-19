@@ -1,0 +1,266 @@
+[
+  {
+    "relativePath": "convex/_generated/api.d.ts",
+    "sizeBytes": 1264
+  },
+  {
+    "relativePath": "convex/_generated/api.js",
+    "sizeBytes": 480
+  },
+  {
+    "relativePath": "convex/_generated/dataModel.d.ts",
+    "sizeBytes": 1736
+  },
+  {
+    "relativePath": "convex/_generated/server.d.ts",
+    "sizeBytes": 5600
+  },
+  {
+    "relativePath": "convex/_generated/server.js",
+    "sizeBytes": 3696
+  },
+  {
+    "relativePath": "convex/auth.config.ts",
+    "sizeBytes": 144
+  },
+  {
+    "relativePath": "convex/codeExecutions.ts",
+    "sizeBytes": 3699
+  },
+  {
+    "relativePath": "convex/http.ts",
+    "sizeBytes": 4349
+  },
+  {
+    "relativePath": "convex/lemonSqueezy.ts",
+    "sizeBytes": 813
+  },
+  {
+    "relativePath": "convex/schema.ts",
+    "sizeBytes": 1443
+  },
+  {
+    "relativePath": "convex/snippets.ts",
+    "sizeBytes": 6421
+  },
+  {
+    "relativePath": "convex/users.ts",
+    "sizeBytes": 1776
+  },
+  {
+    "relativePath": "next.config.ts",
+    "sizeBytes": 133
+  },
+  {
+    "relativePath": "package.json",
+    "sizeBytes": 940
+  },
+  {
+    "relativePath": "src/app/(home)/_components/EditorPanel.tsx",
+    "sizeBytes": 5903
+  },
+  {
+    "relativePath": "src/app/(home)/_components/EditorPanelSkeleton.tsx",
+    "sizeBytes": 3206
+  },
+  {
+    "relativePath": "src/app/(home)/_components/Header.tsx",
+    "sizeBytes": 5058
+  },
+  {
+    "relativePath": "src/app/(home)/_components/HeaderProfileBtn.tsx",
+    "sizeBytes": 807
+  },
+  {
+    "relativePath": "src/app/(home)/_components/LanguageSelector.tsx",
+    "sizeBytes": 6716
+  },
+  {
+    "relativePath": "src/app/(home)/_components/OutputPanel.tsx",
+    "sizeBytes": 3843
+  },
+  {
+    "relativePath": "src/app/(home)/_components/RunButton.tsx",
+    "sizeBytes": 2251
+  },
+  {
+    "relativePath": "src/app/(home)/_components/RunningCodeSkeleton.tsx",
+    "sizeBytes": 630
+  },
+  {
+    "relativePath": "src/app/(home)/_components/ShareSnippetDialog.tsx",
+    "sizeBytes": 3330
+  },
+  {
+    "relativePath": "src/app/(home)/_components/ThemeSelector.tsx",
+    "sizeBytes": 5283
+  },
+  {
+    "relativePath": "src/app/(home)/_constants/index.ts",
+    "sizeBytes": 12895
+  },
+  {
+    "relativePath": "src/app/(home)/page.tsx",
+    "sizeBytes": 529
+  },
+  {
+    "relativePath": "src/app/layout.tsx",
+    "sizeBytes": 1495
+  },
+  {
+    "relativePath": "src/app/pricing/_components/FeatureCategory.tsx",
+    "sizeBytes": 323
+  },
+  {
+    "relativePath": "src/app/pricing/_components/FeatureItem.tsx",
+    "sizeBytes": 592
+  },
+  {
+    "relativePath": "src/app/pricing/_components/ProPlanView.tsx",
+    "sizeBytes": 2570
+  },
+  {
+    "relativePath": "src/app/pricing/_components/UpgradeButton.tsx",
+    "sizeBytes": 558
+  },
+  {
+    "relativePath": "src/app/pricing/_constants/index.ts",
+    "sizeBytes": 1133
+  },
+  {
+    "relativePath": "src/app/pricing/page.tsx",
+    "sizeBytes": 7545
+  },
+  {
+    "relativePath": "src/app/privacy/page.tsx",
+    "sizeBytes": 8356
+  },
+  {
+    "relativePath": "src/app/profile/_components/CodeBlock.tsx",
+    "sizeBytes": 1756
+  },
+  {
+    "relativePath": "src/app/profile/_components/ProfileHeader.tsx",
+    "sizeBytes": 7511
+  },
+  {
+    "relativePath": "src/app/profile/_components/ProfileHeaderSkeleton.tsx",
+    "sizeBytes": 3055
+  },
+  {
+    "relativePath": "src/app/profile/page.tsx",
+    "sizeBytes": 18038
+  },
+  {
+    "relativePath": "src/app/snippets/[snippet]/_components/CodeBlock.tsx",
+    "sizeBytes": 1750
+  },
+  {
+    "relativePath": "src/app/snippets/[snippet]/_components/Comment.tsx",
+    "sizeBytes": 1909
+  },
+  {
+    "relativePath": "src/app/snippets/[snippet]/_components/CommentContent.tsx",
+    "sizeBytes": 858
+  },
+  {
+    "relativePath": "src/app/snippets/[snippet]/_components/CommentForm.tsx",
+    "sizeBytes": 3634
+  },
+  {
+    "relativePath": "src/app/snippets/[snippet]/_components/Comments.tsx",
+    "sizeBytes": 2897
+  },
+  {
+    "relativePath": "src/app/snippets/[snippet]/_components/CopyButton.tsx",
+    "sizeBytes": 743
+  },
+  {
+    "relativePath": "src/app/snippets/[snippet]/_components/SnippetLoadingSkeleton.tsx",
+    "sizeBytes": 2687
+  },
+  {
+    "relativePath": "src/app/snippets/[snippet]/page.tsx",
+    "sizeBytes": 5946
+  },
+  {
+    "relativePath": "src/app/snippets/_components/SnippetCard.tsx",
+    "sizeBytes": 7097
+  },
+  {
+    "relativePath": "src/app/snippets/_components/SnippetsPageSkeleton.tsx",
+    "sizeBytes": 3943
+  },
+  {
+    "relativePath": "src/app/snippets/page.tsx",
+    "sizeBytes": 11285
+  },
+  {
+    "relativePath": "src/app/support/page.tsx",
+    "sizeBytes": 4939
+  },
+  {
+    "relativePath": "src/app/terms/page.tsx",
+    "sizeBytes": 7590
+  },
+  {
+    "relativePath": "src/components/DevScreenPromo.tsx",
+    "sizeBytes": 2382
+  },
+  {
+    "relativePath": "src/components/Footer.tsx",
+    "sizeBytes": 3179
+  },
+  {
+    "relativePath": "src/components/LoginButton.tsx",
+    "sizeBytes": 626
+  },
+  {
+    "relativePath": "src/components/NavigationHeader.tsx",
+    "sizeBytes": 4452
+  },
+  {
+    "relativePath": "src/components/ScreenTooSmallGuard.tsx",
+    "sizeBytes": 2655
+  },
+  {
+    "relativePath": "src/components/StarButton.tsx",
+    "sizeBytes": 1411
+  },
+  {
+    "relativePath": "src/components/ToastProvider.tsx",
+    "sizeBytes": 146
+  },
+  {
+    "relativePath": "src/components/providers/ConvexClientProvider.tsx",
+    "sizeBytes": 528
+  },
+  {
+    "relativePath": "src/global.d.ts",
+    "sizeBytes": 115
+  },
+  {
+    "relativePath": "src/hooks/useMounted.tsx",
+    "sizeBytes": 249
+  },
+  {
+    "relativePath": "src/hooks/useScreenSize.ts",
+    "sizeBytes": 623
+  },
+  {
+    "relativePath": "src/proxy.ts",
+    "sizeBytes": 281
+  },
+  {
+    "relativePath": "src/store/useCodeEditorStore.ts",
+    "sizeBytes": 3749
+  },
+  {
+    "relativePath": "src/types/index.ts",
+    "sizeBytes": 1358
+  },
+  {
+    "relativePath": "tailwind.config.ts",
+    "sizeBytes": 393
+  }
+]
