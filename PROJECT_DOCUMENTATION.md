@@ -837,5 +837,5 @@ SSE Stream to Client with Cited Sources
 - **Test Suite**: Run unit tests via `npm test` (`vitest run`). E2E smoke tests are configured via `playwright test`.
 - **Database Schema Sync**: Use `npm run db:push` for development schema synchronization.
 
----
-Written by Yash Lagare.
+
+Written by Yash Lagare
