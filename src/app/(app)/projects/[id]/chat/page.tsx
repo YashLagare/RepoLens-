@@ -1,3 +1,4 @@
+import { ProjectNav } from "@/components/projects/project-nav";
 import { ProjectChat } from "@/components/projects/project-chat";
 import { buttonVariants } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
@@ -17,7 +18,10 @@ export default async function ProjectChatPage({ params }: PageProps) {
   const { id } = await params;
   const project = await prisma.project.findFirst({
     where: { id, userId: session.user.id },
-    include: { _count: { select: { chunks: true } } },
+    include: {
+      report: { select: { id: true } },
+      _count: { select: { chunks: true } },
+    },
   });
 
   if (!project) notFound();
@@ -31,12 +35,12 @@ export default async function ProjectChatPage({ params }: PageProps) {
           <p className="app-kicker">AI Chat</p>
           <h1 className="app-title mt-2 text-3xl">{project.name}</h1>
         </div>
-        <Link
-          href={`/projects/${project.id}`}
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-        >
-          Overview
-        </Link>
+        <ProjectNav
+          projectId={project.id}
+          activeTab="chat"
+          reportReady={Boolean(project.report)}
+          chatReady={ready}
+        />
       </div>
 
       {ready ? (

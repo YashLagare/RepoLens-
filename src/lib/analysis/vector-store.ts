@@ -13,6 +13,17 @@ export type StoredChunk = {
   score?: number;
 };
 
+// Prioritize application logic chunks over build configs or definitions
+function scoreChunkPriority(draft: CodeChunkDraft): number {
+  const p = draft.filePath.toLowerCase();
+  if (p.includes(".config.") || p.includes(".rc.") || p.endsWith(".d.ts")) return 1;
+  if (p.includes("test") || p.includes("spec") || p.includes("__tests__")) return 2;
+  if (p.startsWith("src/") || p.startsWith("app/") || p.startsWith("lib/")) return 10;
+  if (p.includes("api/") || p.includes("routes/") || p.includes("controllers/")) return 9;
+  if (p.includes("components/") || p.includes("views/")) return 8;
+  return 5;
+}
+
 /** Replace all code chunks for a project and store embeddings in pgvector. */
 export async function storeProjectChunks(
   projectId: string,
@@ -20,8 +31,11 @@ export async function storeProjectChunks(
 ): Promise<number> {
   await prisma.codeChunk.deleteMany({ where: { projectId } });
 
-  // Ensure maximum 80 high-signal chunks are indexed
-  const cappedDrafts = drafts.slice(0, 80);
+  // Prioritize core application code and cap at 32 high-signal chunks for fast serverless indexing
+  const sorted = [...drafts].sort(
+    (a, b) => scoreChunkPriority(b) - scoreChunkPriority(a),
+  );
+  const cappedDrafts = sorted.slice(0, 32);
 
   if (cappedDrafts.length === 0) {
     throw new Error("No code chunks were produced from the source files.");

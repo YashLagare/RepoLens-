@@ -1,4 +1,5 @@
 import { IssuesDashboard } from "@/components/projects/issues-dashboard";
+import { ProjectNav } from "@/components/projects/project-nav";
 import {
   GenerateReportButton,
   RetryFullAnalysisButton,
@@ -80,20 +81,12 @@ export default async function ProjectIssuesPage({ params }: PageProps) {
           <p className="app-kicker">Issues</p>
           <h1 className="app-title mt-2 text-3xl">{project.name}</h1>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={`/projects/${project.id}/report`}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            Health Report
-          </Link>
-          <Link
-            href={`/projects/${project.id}`}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            Overview
-          </Link>
-        </div>
+        <ProjectNav
+          projectId={project.id}
+          activeTab="issues"
+          reportReady={Boolean(project.report)}
+          chatReady={project._count.chunks > 0}
+        />
       </div>
 
       {!project.report ? (

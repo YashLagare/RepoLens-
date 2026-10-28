@@ -39,11 +39,13 @@ function SubmitButton({
 
 export function AnalyzeAgainButton({
   projectId,
+  label = "Re-index repository",
   className,
   size = "sm",
   variant = "outline",
 }: {
   projectId: string;
+  label?: string;
   className?: string;
   size?: "default" | "sm" | "xs";
   variant?: "default" | "outline" | "ghost" | "secondary";
@@ -63,7 +65,7 @@ export function AnalyzeAgainButton({
       <form action={formAction} className="inline-flex">
         <input type="hidden" name="projectId" value={projectId} />
         <SubmitButton
-          label="Analyze again"
+          label={label}
           pendingLabel="Starting..."
           size={size}
           variant={variant}

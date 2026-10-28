@@ -1,4 +1,5 @@
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
+import { ProjectNav } from "@/components/projects/project-nav";
 import {
   GenerateReportButton,
   RetryFullAnalysisButton,
@@ -41,27 +42,6 @@ export default async function ProjectOverviewPage({ params }: PageProps) {
   const chatReady = project._count.chunks > 0;
   const reportReady = Boolean(project.report);
 
-  const navLinks = [
-    reportReady
-      ? {
-          href: `/projects/${project.id}/report`,
-          label: "Health Report",
-          primary: true,
-        }
-      : null,
-    reportReady
-      ? { href: `/projects/${project.id}/issues`, label: "Issues" }
-      : null,
-    chatReady
-      ? { href: `/projects/${project.id}/chat`, label: "AI Chat" }
-      : null,
-    { href: `/projects/${project.id}/explorer`, label: "Explorer" },
-  ].filter(Boolean) as Array<{
-    href: string;
-    label: string;
-    primary?: boolean;
-  }>;
-
   return (
     <main className="app-page">
       <header className="mb-8">
@@ -93,24 +73,13 @@ export default async function ProjectOverviewPage({ params }: PageProps) {
             />
           </div>
         </div>
-        <nav className="mt-5 flex flex-wrap gap-2">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                buttonVariants({
-                  variant: link.primary ? "default" : "outline",
-                  size: "sm",
-                }),
-                link.primary &&
-                  "bg-[linear-gradient(135deg,#06b6d4_0%,#0e7490_100%)] text-white hover:opacity-90",
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        <ProjectNav
+          projectId={project.id}
+          activeTab="overview"
+          reportReady={reportReady}
+          chatReady={chatReady}
+          className="mt-6"
+        />
       </header>
 
       <section className="app-panel space-y-4 p-6 text-sm">

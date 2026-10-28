@@ -24,6 +24,8 @@ export async function GET(_request: Request, context: RouteContext) {
       errorMessage: true,
       framework: true,
       fileCount: true,
+      updatedAt: true,
+      _count: { select: { chunks: true } },
       report: { select: { healthScore: true } },
     },
   });
@@ -32,5 +34,22 @@ export async function GET(_request: Request, context: RouteContext) {
     return Response.json({ error: "Project not found" }, { status: 404 });
   }
 
-  return Response.json(project);
+  // Detect if a serverless background worker timed out (no updates for > 50s while processing)
+  const isStalled =
+    project.status === "processing" &&
+    Date.now() - project.updatedAt.getTime() > 50 * 1000;
+
+  return Response.json({
+    id: project.id,
+    name: project.name,
+    status: project.status,
+    progressStep: project.progressStep,
+    progressPercent: project.progressPercent,
+    errorMessage: project.errorMessage,
+    framework: project.framework,
+    fileCount: project.fileCount,
+    report: project.report,
+    isStalled,
+    chunksReady: project._count.chunks > 0,
+  });
 }

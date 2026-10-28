@@ -35,12 +35,18 @@ export async function POST(_request: Request, context: RouteContext) {
       });
     }
 
-    // Avoid starting a second run if one is clearly in-flight.
-    if (
+    const url = new URL(_request.url);
+    const stageParam = url.searchParams.get("stage") as "knowledge" | "report" | null;
+    const force = url.searchParams.get("force") === "true";
+
+    // Avoid starting a second run if one is actively running recently (within 45s)
+    const isActivelyProcessing =
+      !force &&
       project.status === "processing" &&
       project.progressPercent >= 30 &&
-      Date.now() - project.updatedAt.getTime() < 2 * 60 * 1000
-    ) {
+      Date.now() - project.updatedAt.getTime() < 45 * 1000;
+
+    if (isActivelyProcessing) {
       return Response.json({
         ok: true,
         alreadyRunning: true,
@@ -61,13 +67,17 @@ export async function POST(_request: Request, context: RouteContext) {
       );
     }
 
-    await runFullProjectAnalysis(project.id);
+    const result = await runFullProjectAnalysis(project.id, {
+      stage: stageParam ?? "auto",
+    });
+
     const updated = await prisma.project.findUnique({
       where: { id: project.id },
     });
 
     return Response.json({
       ok: true,
+      stage: result.stage,
       status: updated?.status ?? "completed",
       progressStep: updated?.progressStep ?? "Complete",
       progressPercent: updated?.progressPercent ?? 100,

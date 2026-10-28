@@ -2,6 +2,7 @@ import {
   GenerateReportButton,
   RetryFullAnalysisButton,
 } from "@/components/projects/report-actions";
+import { ProjectNav } from "@/components/projects/project-nav";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -131,36 +132,12 @@ export default async function ProjectReportPage({ params }: PageProps) {
             results.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {report ? (
-            <Link
-              href={`/projects/${project.id}/issues`}
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-            >
-              Issues
-            </Link>
-          ) : null}
-          <Link
-            href={`/projects/${project.id}/explorer`}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            Explore
-          </Link>
-          <Link
-            href={`/projects/${project.id}`}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            Overview
-          </Link>
-          {project._count.chunks > 0 ? (
-            <Link
-              href={`/projects/${project.id}/chat`}
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-            >
-              Chat
-            </Link>
-          ) : null}
-        </div>
+        <ProjectNav
+          projectId={project.id}
+          activeTab="report"
+          reportReady={Boolean(report)}
+          chatReady={project._count.chunks > 0}
+        />
       </header>
 
       {!report ? (
@@ -438,9 +415,24 @@ export default async function ProjectReportPage({ params }: PageProps) {
             </div>
           </section>
 
-          <div className="app-panel flex flex-wrap items-center gap-3 p-4">
-            <GenerateReportButton projectId={project.id} />
-            <RetryFullAnalysisButton projectId={project.id} />
+          <div className="app-panel flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5">
+            <div>
+              <p className="font-semibold text-foreground">Need updated results?</p>
+              <p className="text-xs text-[color:var(--app-muted)] mt-0.5">
+                If you recently pushed changes to your repository, regenerate the health review or perform a full re-index.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <GenerateReportButton
+                projectId={project.id}
+                label="Regenerate Report"
+                variant="outline"
+              />
+              <RetryFullAnalysisButton
+                projectId={project.id}
+                label="Re-index Repository"
+              />
+            </div>
           </div>
         </div>
       )}

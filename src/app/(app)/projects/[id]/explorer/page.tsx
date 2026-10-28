@@ -1,4 +1,5 @@
 import { CodeExplorer } from "@/components/projects/code-explorer";
+import { ProjectNav } from "@/components/projects/project-nav";
 import { buttonVariants } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -28,6 +29,10 @@ export default async function ProjectExplorerPage({
 
   const project = await prisma.project.findFirst({
     where: { id, userId: session.user.id },
+    include: {
+      report: { select: { id: true } },
+      _count: { select: { chunks: true } },
+    },
   });
   if (!project) notFound();
 
@@ -55,32 +60,12 @@ export default async function ProjectExplorerPage({
           <p className="app-kicker">Code Explorer</p>
           <h1 className="app-title mt-2 text-3xl">{project.name}</h1>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={`/projects/${project.id}`}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            Overview
-          </Link>
-          <Link
-            href={`/projects/${project.id}/chat`}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            Chat
-          </Link>
-          <Link
-            href={`/projects/${project.id}/report`}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            Report
-          </Link>
-          <Link
-            href={`/projects/${project.id}/issues`}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            Issues
-          </Link>
-        </div>
+        <ProjectNav
+          projectId={project.id}
+          activeTab="explorer"
+          reportReady={Boolean(project.report)}
+          chatReady={project._count.chunks > 0}
+        />
       </div>
 
       {paths.length === 0 ? (
