@@ -93,11 +93,13 @@ Provide automated static analysis, structural code chunking, and contextual conv
 
 ### Primary Modules
 1. **Ingestion & Extraction Engine**: GitHub API zipball streaming and JSZip decompression with size constraints.
-2. **Parser & Chunking Pipeline**: Tree-sitter-based structural AST parsing, architectural file scoring (`getFileRelevanceScore`), and a 75-chunk high-signal budget per project.
+2. **Parser & Chunking Pipeline**: Tree-sitter-based structural AST parsing, priority file scoring (`scoreChunkPriority`), and a 32-chunk high-signal budget prioritized for fast serverless execution.
 3. **Vector & RAG Subsystem**: Local MiniLM embedding pipeline with direct tensor inference and PostgreSQL vector distance querying (`<=>`).
 4. **Health Review Engine**: Deterministic static metric extraction combined with structured LLM review via OpenRouter (`meta-llama/llama-3.3-70b-instruct`).
-5. **Subscription & Quota Manager**: Stripe billing integration with daily analysis quotas and rate limiting.
-6. **Project Management & Deletion**: Dedicated REST endpoints with relational transaction cascades for project and chunk deletion.
+5. **Staged Analysis & Timeout Watchdog**: Resumable multi-stage pipeline (Knowledge Chunking -> Health Review) with automated serverless timeout detection and one-click resumption.
+6. **Unified Workspace Navigation**: Standardized 5-tab subnavigation bar (`ProjectNav`) with active route highlighting across Overview, Health Report, Issues, Code Explorer, and AI Chat.
+7. **Subscription & Quota Manager**: Stripe billing integration with daily analysis quotas and rate limiting.
+8. **Project Management & Deletion**: Dedicated REST endpoints and interactive confirmation dialogs (`ConfirmDialog`) with relational transaction cascades for project and chunk deletion.
 
 ### Target Audience & Use Cases
 - **Repository Audits**: Evaluating third-party or legacy codebases prior to refactoring or integration.
@@ -275,9 +277,9 @@ RepoLens/
 
 ### 2. AST-Aware Code Chunking & Local Embeddings
 - **Syntax Parsing**: Uses Tree-sitter (`tree-sitter-javascript`, `tree-sitter-typescript`) to parse ASTs and split source code along logical declarations (functions, classes, methods, type aliases, exports).
-- **Architectural Prioritization**: Scores files via `getFileRelevanceScore` to prioritize core application logic (`src/app/`, `components/`, `lib/`, `api/`) over config and utility files within a 75-chunk high-signal budget per project.
+- **Architectural Prioritization**: Scores files via `scoreChunkPriority` to prioritize core application logic (`src/app/`, `components/`, `lib/`, `api/`) over config and utility files within a 32-chunk high-signal budget per project.
 - **Chunk Sizing**: Targets 200–400 tokens per chunk with fallback linear splitting for oversized files and merging for small adjacent nodes.
-- **Local Embedding**: Generates 384-dimensional vector embeddings using `@xenova/transformers` (`all-MiniLM-L6-v2`) in batches of 16 locally in the Node.js process using direct tensor inference.
+- **Local Embedding**: Generates 384-dimensional vector embeddings using `@xenova/transformers` (`all-MiniLM-L6-v2`) in batches of 24 locally in the Node.js process using direct tensor inference, keeping execution under 10 seconds.
 - **PostgreSQL Vector Persistence**: Inserts embeddings into `CodeChunk.embedding` as `vector(384)` for similarity searches.
 
 ### 3. Codebase Health Review & Issue Generation
@@ -306,6 +308,13 @@ RepoLens/
   - Free: 5 analyses/day, 5 projects, 20 chat messages/hour.
   - Premium: 50 analyses/day, unlimited projects, 200 chat messages/hour.
 - **Stripe Integration**: Supports Stripe Checkout redirection, Customer Portal access, and webhook synchronization.
+
+### 7. Unified Workspace Navigation & Serverless Resilience
+- **Consistent Project Navigation**: Seamless 5-tab navigation bar (`ProjectNav`) with active route indication and Lucide icons across Overview, Health Report, Issues, Code Explorer, and AI Chat.
+- **Resumable Staged Analysis**: Analysis pipeline can execute in stages (Knowledge Base Chunks -> LLM Health Review) and automatically skips redundant embedding if chunks already exist in PostgreSQL.
+- **Serverless Timeout Watchdog**: Automatically detects when background execution halts on serverless platforms (e.g., Vercel 15s/60s limits) and presents an informative recovery card with a one-click "Resume analysis" button.
+- **Action Contextualization**: Avoids redundant primary CTAs on already-generated health reports, providing dedicated "Regenerate Report" and "Re-index Repository" secondary options.
+- **Safe Repository Deletion**: Reusable `ConfirmDialog` modal preventing accidental repository deletion.
 
 ---
 
