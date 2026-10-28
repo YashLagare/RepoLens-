@@ -7,6 +7,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { AlertCircle } from "lucide-react";
+
 type ProgressState = {
   id: string;
   name: string;
@@ -17,6 +19,7 @@ type ProgressState = {
   framework: string | null;
   fileCount: number;
   report: { healthScore: number } | null;
+  isStalled?: boolean;
 };
 
 export function AnalysisProgress({
@@ -30,6 +33,7 @@ export function AnalysisProgress({
   const [state, setState] = useState(initial);
   const startedRef = useRef(false);
   const [startError, setStartError] = useState<string | null>(null);
+  const [isStalled, setIsStalled] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,9 +49,14 @@ export function AnalysisProgress({
         if (!text || cancelled) return;
 
         try {
-          const data = JSON.parse(text) as ProgressState;
+          const data = JSON.parse(text) as ProgressState & { isStalled?: boolean };
           if (!cancelled && data && data.status) {
             setState(data);
+            if (data.isStalled) {
+              setIsStalled(true);
+            } else if (data.status === "completed" || data.status === "failed") {
+              setIsStalled(false);
+            }
           }
         } catch {
           // Ignore transient non-JSON / HTML responses
@@ -95,8 +104,14 @@ export function AnalysisProgress({
           try {
             data = JSON.parse(text);
           } catch {
-            // Non-JSON or empty response (e.g. Vercel 504 Gateway Timeout)
-            // Polling will continue to track database status
+            // Non-JSON or HTML response (e.g. Vercel 504 Gateway Timeout)
+            if (!response.ok) {
+              setStartError(
+                "Execution took longer than serverless host limit. Your code progress is saved — click Resume below.",
+              );
+              setIsStalled(true);
+              return;
+            }
           }
         }
 
@@ -113,9 +128,15 @@ export function AnalysisProgress({
               progressPercent: data.progressPercent ?? current.progressPercent,
             }));
           }
+        } else if (!response.ok) {
+          setStartError(
+            "Execution paused by serverless timeout. Click Resume below to continue.",
+          );
+          setIsStalled(true);
         }
       } catch {
-        // Network error / connection drop: polling will continue tracking status
+        // Network error / connection drop
+        setIsStalled(true);
       }
     })();
   }, [projectId, state.progressPercent, state.status]);
@@ -129,21 +150,23 @@ export function AnalysisProgress({
     }
   }, [state.status, projectId, router]);
 
-  async function retry() {
+  async function retry(force = false) {
     setStartError(null);
+    setIsStalled(false);
     startedRef.current = true;
     setState((current) => ({
       ...current,
       status: "processing",
-      progressStep: "Starting analysis",
+      progressStep: "Resuming analysis...",
       progressPercent: Math.max(current.progressPercent, 30),
       errorMessage: null,
     }));
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/analyze`, {
-        method: "POST",
-      });
+      const response = await fetch(
+        `/api/projects/${projectId}/analyze${force ? "?force=true" : ""}`,
+        { method: "POST" },
+      );
 
       let data: {
         ok?: boolean;
@@ -158,7 +181,13 @@ export function AnalysisProgress({
         try {
           data = JSON.parse(text);
         } catch {
-          // Handled by polling
+          if (!response.ok) {
+            setStartError(
+              "Execution timed out. Click Resume again to continue to the next step.",
+            );
+            setIsStalled(true);
+            return;
+          }
         }
       }
 
@@ -177,7 +206,7 @@ export function AnalysisProgress({
         }
       }
     } catch {
-      // Handled by polling
+      setIsStalled(true);
     }
   }
 
@@ -287,18 +316,30 @@ export function AnalysisProgress({
         </div>
       </div>
 
-      {state.status === "failed" || startError ? (
-        <div className="app-panel space-y-3 border-destructive/30 p-5">
-          <p className="text-sm text-destructive">
-            {startError ?? state.errorMessage ?? "Analysis failed."}
-          </p>
-          <div className="flex flex-wrap gap-2">
+      {state.status === "failed" || startError || isStalled ? (
+        <div className="app-panel space-y-3 border-amber-500/30 bg-amber-500/5 p-5">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="size-5 shrink-0 text-amber-500 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                {isStalled || startError?.includes("timed out") || startError?.includes("limit")
+                  ? "Execution paused by cloud timeout"
+                  : (startError ?? state.errorMessage ?? "Analysis paused.")}
+              </p>
+              <p className="mt-1 text-xs text-[color:var(--app-muted)]">
+                {isStalled || startError?.includes("timed out") || startError?.includes("limit")
+                  ? "Serverless containers have strict execution limits. Your code chunks and progress are safely preserved in the database. Click Resume to continue without restarting from scratch."
+                  : "An unexpected issue interrupted analysis. Click Retry to continue."}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 pt-1">
             <Button
               type="button"
-              onClick={() => void retry()}
+              onClick={() => void retry(true)}
               className="bg-[linear-gradient(135deg,#06b6d4_0%,#0e7490_100%)] text-white hover:opacity-90"
             >
-              Retry analysis
+              {state.progressPercent >= 45 ? "Resume analysis" : "Retry analysis"}
             </Button>
             <Link
               href={`/projects/${projectId}`}

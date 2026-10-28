@@ -59,24 +59,42 @@ export async function buildProjectKnowledge(projectId: string): Promise<{
   }
 }
 
+import { prisma } from "@/lib/db";
+
 /**
  * Full analysis path used after import:
- * knowledge base first, then health report.
+ * knowledge base first, then health report. Supports staged and resumable runs.
  */
-export async function runFullProjectAnalysis(projectId: string): Promise<void> {
-  await setProjectProgress(projectId, {
-    step: "Starting analysis",
-    percent: 30,
-    status: "processing",
-    errorMessage: null,
-  });
+export async function runFullProjectAnalysis(
+  projectId: string,
+  options?: { stage?: "knowledge" | "report" | "auto" },
+): Promise<{ stage: "knowledge" | "report" | "completed"; chunkCount?: number }> {
+  const stage = options?.stage ?? "auto";
 
-  await buildProjectKnowledge(projectId);
+  // Check if code chunks already exist to avoid repeating heavy embedding
+  const existingChunks = await prisma.codeChunk.count({ where: { projectId } });
 
+  if (stage === "knowledge" || (stage === "auto" && existingChunks === 0)) {
+    await setProjectProgress(projectId, {
+      step: "Starting analysis",
+      percent: 30,
+      status: "processing",
+      errorMessage: null,
+    });
+
+    const { chunkCount } = await buildProjectKnowledge(projectId);
+
+    if (stage === "knowledge") {
+      return { stage: "knowledge", chunkCount };
+    }
+  }
+
+  // Generate health report
   await setProjectProgress(projectId, {
     step: "Running analysis",
     percent: 85,
     status: "processing",
+    errorMessage: null,
   });
 
   await setProjectProgress(projectId, {
@@ -92,4 +110,6 @@ export async function runFullProjectAnalysis(projectId: string): Promise<void> {
     status: "completed",
     errorMessage: null,
   });
+
+  return { stage: "completed" };
 }

@@ -7,11 +7,20 @@ import {
   retryFullAnalysis,
   type RetryState,
 } from "@/lib/actions/analysis";
+import { RefreshCw, RotateCw } from "lucide-react";
 import { useActionState, useState } from "react";
 
 const initialState: RetryState = {};
 
-export function GenerateReportButton({ projectId }: { projectId: string }) {
+export function GenerateReportButton({
+  projectId,
+  label = "Generate health report",
+  variant = "default",
+}: {
+  projectId: string;
+  label?: string;
+  variant?: "default" | "outline";
+}) {
   const [state, formAction, pending] = useActionState(
     generateReportAction,
     initialState,
@@ -38,15 +47,31 @@ export function GenerateReportButton({ projectId }: { projectId: string }) {
       <Button
         type="submit"
         disabled={pending}
-        className="bg-[linear-gradient(135deg,#06b6d4_0%,#0e7490_100%)] text-white hover:opacity-90"
+        variant={variant === "outline" ? "outline" : "default"}
+        className={
+          variant === "default"
+            ? "bg-[linear-gradient(135deg,#06b6d4_0%,#0e7490_100%)] text-white hover:opacity-90 inline-flex items-center gap-2"
+            : "inline-flex items-center gap-2 border-[color:var(--app-line)] hover:bg-[color:var(--app-accent)]/10"
+        }
       >
-        {pending ? "Generating report..." : "Generate health report"}
+        <RotateCw className={`size-4 shrink-0 ${pending ? "animate-spin" : ""}`} />
+        {pending
+          ? label.toLowerCase().includes("regenerate")
+            ? "Regenerating..."
+            : "Generating..."
+          : label}
       </Button>
     </form>
   );
 }
 
-export function RetryFullAnalysisButton({ projectId }: { projectId: string }) {
+export function RetryFullAnalysisButton({
+  projectId,
+  label = "Re-index repository",
+}: {
+  projectId: string;
+  label?: string;
+}) {
   const [state, formAction, pending] = useActionState(
     retryFullAnalysis,
     initialState,
@@ -70,8 +95,14 @@ export function RetryFullAnalysisButton({ projectId }: { projectId: string }) {
           onDismiss={() => setDismissed(true)}
         />
       ) : null}
-      <Button type="submit" disabled={pending} variant="outline">
-        {pending ? "Starting..." : "Analyze again"}
+      <Button
+        type="submit"
+        disabled={pending}
+        variant="outline"
+        className="inline-flex items-center gap-2 border-[color:var(--app-line)] hover:bg-[color:var(--app-accent)]/10"
+      >
+        <RefreshCw className={`size-4 shrink-0 ${pending ? "animate-spin" : ""}`} />
+        {pending ? "Re-indexing..." : label}
       </Button>
     </form>
   );
