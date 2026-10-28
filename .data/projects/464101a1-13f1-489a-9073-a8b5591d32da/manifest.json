@@ -1,0 +1,174 @@
+[
+  {
+    "relativePath": "backend/package.json",
+    "sizeBytes": 652
+  },
+  {
+    "relativePath": "backend/src/DB/db.js",
+    "sizeBytes": 350
+  },
+  {
+    "relativePath": "backend/src/config/env.js",
+    "sizeBytes": 808
+  },
+  {
+    "relativePath": "backend/src/config/inngest.js",
+    "sizeBytes": 2897
+  },
+  {
+    "relativePath": "backend/src/config/stream.js",
+    "sizeBytes": 1245
+  },
+  {
+    "relativePath": "backend/src/middleware/auth.middleware.js",
+    "sizeBytes": 205
+  },
+  {
+    "relativePath": "backend/src/middleware/chat.controller.js",
+    "sizeBytes": 3529
+  },
+  {
+    "relativePath": "backend/src/models/user.model.js",
+    "sizeBytes": 376
+  },
+  {
+    "relativePath": "backend/src/routes/chat.route.js",
+    "sizeBytes": 351
+  },
+  {
+    "relativePath": "backend/src/server.js",
+    "sizeBytes": 2149
+  },
+  {
+    "relativePath": "frontend/eslint.config.js",
+    "sizeBytes": 758
+  },
+  {
+    "relativePath": "frontend/package.json",
+    "sizeBytes": 1046
+  },
+  {
+    "relativePath": "frontend/src/App.jsx",
+    "sizeBytes": 974
+  },
+  {
+    "relativePath": "frontend/src/components/AISummaryModal.jsx",
+    "sizeBytes": 6628
+  },
+  {
+    "relativePath": "frontend/src/components/AudioHuddleBar.jsx",
+    "sizeBytes": 3885
+  },
+  {
+    "relativePath": "frontend/src/components/CallContent.jsx",
+    "sizeBytes": 692
+  },
+  {
+    "relativePath": "frontend/src/components/ChannelListError.jsx",
+    "sizeBytes": 766
+  },
+  {
+    "relativePath": "frontend/src/components/ChannelListLoading.jsx",
+    "sizeBytes": 619
+  },
+  {
+    "relativePath": "frontend/src/components/CommandKModal.jsx",
+    "sizeBytes": 5292
+  },
+  {
+    "relativePath": "frontend/src/components/CreateChannelModal.jsx",
+    "sizeBytes": 25618
+  },
+  {
+    "relativePath": "frontend/src/components/CustomChannelHeader.jsx",
+    "sizeBytes": 14243
+  },
+  {
+    "relativePath": "frontend/src/components/CustomChannelPreview.jsx",
+    "sizeBytes": 3482
+  },
+  {
+    "relativePath": "frontend/src/components/EmptyChannelState.jsx",
+    "sizeBytes": 1420
+  },
+  {
+    "relativePath": "frontend/src/components/ImageLightbox.jsx",
+    "sizeBytes": 3386
+  },
+  {
+    "relativePath": "frontend/src/components/InviteModal.jsx",
+    "sizeBytes": 5372
+  },
+  {
+    "relativePath": "frontend/src/components/MembersModal.jsx",
+    "sizeBytes": 2141
+  },
+  {
+    "relativePath": "frontend/src/components/MobileSidebar.jsx",
+    "sizeBytes": 446
+  },
+  {
+    "relativePath": "frontend/src/components/PageLoader.jsx",
+    "sizeBytes": 1776
+  },
+  {
+    "relativePath": "frontend/src/components/PinnedMessagesModal.jsx",
+    "sizeBytes": 6190
+  },
+  {
+    "relativePath": "frontend/src/components/UserStatusModal.jsx",
+    "sizeBytes": 4530
+  },
+  {
+    "relativePath": "frontend/src/components/UsersList.jsx",
+    "sizeBytes": 7381
+  },
+  {
+    "relativePath": "frontend/src/components/WorkspaceSidebar.jsx",
+    "sizeBytes": 4716
+  },
+  {
+    "relativePath": "frontend/src/context/ThemeContext.jsx",
+    "sizeBytes": 1436
+  },
+  {
+    "relativePath": "frontend/src/hooks/useStreamChat.js",
+    "sizeBytes": 2208
+  },
+  {
+    "relativePath": "frontend/src/lib/api.js",
+    "sizeBytes": 318
+  },
+  {
+    "relativePath": "frontend/src/lib/axios.js",
+    "sizeBytes": 458
+  },
+  {
+    "relativePath": "frontend/src/lib/sounds.js",
+    "sizeBytes": 3174
+  },
+  {
+    "relativePath": "frontend/src/main.jsx",
+    "sizeBytes": 1559
+  },
+  {
+    "relativePath": "frontend/src/pages/AuthPage.jsx",
+    "sizeBytes": 9480
+  },
+  {
+    "relativePath": "frontend/src/pages/CallPage.jsx",
+    "sizeBytes": 2443
+  },
+  {
+    "relativePath": "frontend/src/pages/HomePage.jsx",
+    "sizeBytes": 12676
+  },
+  {
+    "relativePath": "frontend/src/providers/AuthProvider.jsx",
+    "sizeBytes": 1424
+  },
+  {
+    "relativePath": "frontend/vite.config.js",
+    "sizeBytes": 224
+  }
+]
