@@ -1,6 +1,6 @@
 # RepoLens
 
-**AI-Powered Codebase Analysis & RAG Platform.**
+**AI-Powered Codebase Analysis & RAG Platform**
 
 ---
 
