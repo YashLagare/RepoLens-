@@ -1,0 +1,238 @@
+[
+  {
+    "relativePath": "backend/controllers/analytics.controller.js",
+    "sizeBytes": 2490
+  },
+  {
+    "relativePath": "backend/controllers/auth.controllers.js",
+    "sizeBytes": 5402
+  },
+  {
+    "relativePath": "backend/controllers/cart.controller.js",
+    "sizeBytes": 2645
+  },
+  {
+    "relativePath": "backend/controllers/coupon.controller.js",
+    "sizeBytes": 1245
+  },
+  {
+    "relativePath": "backend/controllers/payment.controller.js",
+    "sizeBytes": 7286
+  },
+  {
+    "relativePath": "backend/controllers/product.controller.js",
+    "sizeBytes": 5564
+  },
+  {
+    "relativePath": "backend/db/db.js",
+    "sizeBytes": 815
+  },
+  {
+    "relativePath": "backend/lib/cloudinary.js",
+    "sizeBytes": 293
+  },
+  {
+    "relativePath": "backend/lib/redis.js",
+    "sizeBytes": 1358
+  },
+  {
+    "relativePath": "backend/lib/stripe.js",
+    "sizeBytes": 1286
+  },
+  {
+    "relativePath": "backend/middleware/auth.middleware.js",
+    "sizeBytes": 1419
+  },
+  {
+    "relativePath": "backend/models/coupon.model.js",
+    "sizeBytes": 570
+  },
+  {
+    "relativePath": "backend/models/order.model.js",
+    "sizeBytes": 634
+  },
+  {
+    "relativePath": "backend/models/product.model.js",
+    "sizeBytes": 626
+  },
+  {
+    "relativePath": "backend/models/user.model.js",
+    "sizeBytes": 1667
+  },
+  {
+    "relativePath": "backend/routes/analytics.route.js",
+    "sizeBytes": 840
+  },
+  {
+    "relativePath": "backend/routes/auth.route.js",
+    "sizeBytes": 447
+  },
+  {
+    "relativePath": "backend/routes/cart.route.js",
+    "sizeBytes": 459
+  },
+  {
+    "relativePath": "backend/routes/coupon.route.js",
+    "sizeBytes": 330
+  },
+  {
+    "relativePath": "backend/routes/payment.route.js",
+    "sizeBytes": 384
+  },
+  {
+    "relativePath": "backend/routes/product.route.js",
+    "sizeBytes": 802
+  },
+  {
+    "relativePath": "backend/server.js",
+    "sizeBytes": 4476
+  },
+  {
+    "relativePath": "frontend/eslint.config.js",
+    "sizeBytes": 1003
+  },
+  {
+    "relativePath": "frontend/package.json",
+    "sizeBytes": 1047
+  },
+  {
+    "relativePath": "frontend/postcss.config.js",
+    "sizeBytes": 80
+  },
+  {
+    "relativePath": "frontend/src/App.jsx",
+    "sizeBytes": 2697
+  },
+  {
+    "relativePath": "frontend/src/components/admin-side/analyticsTab/AnalyticsTab.jsx",
+    "sizeBytes": 3282
+  },
+  {
+    "relativePath": "frontend/src/components/admin-side/analyticsTab/analyticsCard/AnalyticsCard.jsx",
+    "sizeBytes": 790
+  },
+  {
+    "relativePath": "frontend/src/components/admin-side/createProductForm/CreateProductForm.jsx",
+    "sizeBytes": 5176
+  },
+  {
+    "relativePath": "frontend/src/components/admin-side/productsList/ProductsList.jsx",
+    "sizeBytes": 3670
+  },
+  {
+    "relativePath": "frontend/src/components/cart/cartItem/CartItem.jsx",
+    "sizeBytes": 2461
+  },
+  {
+    "relativePath": "frontend/src/components/cart/emptyCartUI/EmptyCartUI.jsx",
+    "sizeBytes": 738
+  },
+  {
+    "relativePath": "frontend/src/components/cart/giftCouponCard/GiftCouponCard.jsx",
+    "sizeBytes": 3649
+  },
+  {
+    "relativePath": "frontend/src/components/cart/orderSummary/OrderSummary.jsx",
+    "sizeBytes": 3997
+  },
+  {
+    "relativePath": "frontend/src/components/cart/peopleAlsoBought/PeopleAlsoBought.jsx",
+    "sizeBytes": 1370
+  },
+  {
+    "relativePath": "frontend/src/components/categoryItem/CategoryItem.jsx",
+    "sizeBytes": 863
+  },
+  {
+    "relativePath": "frontend/src/components/featuredProductsSlider/FeaturedProducts.jsx",
+    "sizeBytes": 4972
+  },
+  {
+    "relativePath": "frontend/src/components/loadingSpinner/LoadingSpinner.jsx",
+    "sizeBytes": 436
+  },
+  {
+    "relativePath": "frontend/src/components/navbar/Navbar.jsx",
+    "sizeBytes": 3285
+  },
+  {
+    "relativePath": "frontend/src/components/productCard/ProductCard.jsx",
+    "sizeBytes": 1840
+  },
+  {
+    "relativePath": "frontend/src/components/ui/AnalyticsSkeleton.jsx",
+    "sizeBytes": 900
+  },
+  {
+    "relativePath": "frontend/src/components/ui/ErrorState.jsx",
+    "sizeBytes": 704
+  },
+  {
+    "relativePath": "frontend/src/components/ui/LoadingState.jsx",
+    "sizeBytes": 644
+  },
+  {
+    "relativePath": "frontend/src/lib/axios.js",
+    "sizeBytes": 237
+  },
+  {
+    "relativePath": "frontend/src/main.jsx",
+    "sizeBytes": 329
+  },
+  {
+    "relativePath": "frontend/src/pages/admin/AdminPage.jsx",
+    "sizeBytes": 2448
+  },
+  {
+    "relativePath": "frontend/src/pages/auth/login/LoginPage.jsx",
+    "sizeBytes": 4127
+  },
+  {
+    "relativePath": "frontend/src/pages/auth/signup/SignUpPage.jsx",
+    "sizeBytes": 5944
+  },
+  {
+    "relativePath": "frontend/src/pages/cartPage/CartPage.jsx",
+    "sizeBytes": 2242
+  },
+  {
+    "relativePath": "frontend/src/pages/categoryPage/CategoryPage.jsx",
+    "sizeBytes": 1542
+  },
+  {
+    "relativePath": "frontend/src/pages/home/HomePage.jsx",
+    "sizeBytes": 1655
+  },
+  {
+    "relativePath": "frontend/src/pages/purchaseCancel/PurchaseCancelPage.jsx",
+    "sizeBytes": 1705
+  },
+  {
+    "relativePath": "frontend/src/pages/purchaseSuccess/PurchaseSuccessPage.jsx",
+    "sizeBytes": 9038
+  },
+  {
+    "relativePath": "frontend/src/stores/useCartStore.js",
+    "sizeBytes": 3237
+  },
+  {
+    "relativePath": "frontend/src/stores/useProductStore.js",
+    "sizeBytes": 2778
+  },
+  {
+    "relativePath": "frontend/src/stores/useUserStore.js",
+    "sizeBytes": 3334
+  },
+  {
+    "relativePath": "frontend/tailwind.config.js",
+    "sizeBytes": 181
+  },
+  {
+    "relativePath": "frontend/vite.config.js",
+    "sizeBytes": 370
+  },
+  {
+    "relativePath": "package.json",
+    "sizeBytes": 837
+  }
+]
