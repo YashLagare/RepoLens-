@@ -39,9 +39,12 @@ export async function POST(_request: Request, context: RouteContext) {
     const stageParam = url.searchParams.get("stage") as "knowledge" | "report" | null;
     const force = url.searchParams.get("force") === "true";
 
-    // Avoid starting a second run if one is actively running recently (within 45s)
+    // Avoid starting a duplicate run if one is actively running recently
+    // When transitioning from knowledge (>= 70%) to report stage, allow it through
+    const isTransitioningToReport = stageParam === "report" && project.progressPercent >= 70;
     const isActivelyProcessing =
       !force &&
+      !isTransitioningToReport &&
       project.status === "processing" &&
       project.progressPercent >= 30 &&
       Date.now() - project.updatedAt.getTime() < 45 * 1000;

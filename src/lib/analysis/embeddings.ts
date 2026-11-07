@@ -48,7 +48,10 @@ function toNumberArray(data: Float32Array | number[]): number[] {
  * Fast local MiniLM embeddings on serverless CPU.
  * Batches inputs and uses single tensor inference for maximum speed.
  */
-export async function embedTexts(texts: string[]): Promise<number[][]> {
+export async function embedTexts(
+  texts: string[],
+  onBatch?: (completed: number, total: number) => Promise<void> | void,
+): Promise<number[][]> {
   if (texts.length === 0) return [];
 
   const extractor = await getExtractor();
@@ -75,6 +78,9 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
             results.push(list as number[]);
           } else {
             results.push(...(list as number[][]));
+          }
+          if (onBatch) {
+            await onBatch(results.length, texts.length);
           }
           continue;
         }

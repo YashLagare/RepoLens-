@@ -5,7 +5,7 @@ import { ANALYSIS_STEPS } from "@/lib/analysis/progress-steps";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AlertCircle } from "lucide-react";
 
@@ -20,6 +20,7 @@ type ProgressState = {
   fileCount: number;
   report: { healthScore: number } | null;
   isStalled?: boolean;
+  chunksReady?: boolean;
 };
 
 export function AnalysisProgress({
@@ -32,6 +33,8 @@ export function AnalysisProgress({
   const router = useRouter();
   const [state, setState] = useState(initial);
   const startedRef = useRef(false);
+  const runningRef = useRef(false);
+  const autoRetryCountRef = useRef(0);
   const [startError, setStartError] = useState<string | null>(null);
   const [isStalled, setIsStalled] = useState(false);
 
@@ -49,9 +52,16 @@ export function AnalysisProgress({
         if (!text || cancelled) return;
 
         try {
-          const data = JSON.parse(text) as ProgressState & { isStalled?: boolean };
+          const data = JSON.parse(text) as ProgressState & {
+            isStalled?: boolean;
+            chunksReady?: boolean;
+          };
           if (!cancelled && data && data.status) {
-            setState(data);
+            setState((prev) => ({
+              ...prev,
+              ...data,
+              chunksReady: data.chunksReady ?? prev.chunksReady,
+            }));
             if (data.isStalled) {
               setIsStalled(true);
             } else if (data.status === "completed" || data.status === "failed") {
@@ -78,68 +88,111 @@ export function AnalysisProgress({
     };
   }, [projectId]);
 
+  const executeStage = useCallback(
+    async (stage: "knowledge" | "report", force = false) => {
+      const url = `/api/projects/${projectId}/analyze?stage=${stage}${force ? "&force=true" : ""}`;
+      const response = await fetch(url, { method: "POST" });
+      const text = await response.text();
+      let data: {
+        ok?: boolean;
+        error?: string;
+        stage?: string;
+        status?: ProgressState["status"];
+        progressStep?: string;
+        progressPercent?: number;
+      } | null = null;
+
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          if (!response.ok) {
+            throw new Error(
+              "Execution paused by serverless timeout. Your code chunks and progress are safely preserved.",
+            );
+          }
+        }
+      }
+
+      if (!response.ok || (data && !data.ok)) {
+        throw new Error(data?.error ?? "Stage execution interrupted.");
+      }
+
+      if (data?.status) {
+        setState((current) => ({
+          ...current,
+          status: data.status ?? current.status,
+          progressStep: data.progressStep ?? current.progressStep,
+          progressPercent: data.progressPercent ?? current.progressPercent,
+          chunksReady: stage === "knowledge" ? true : current.chunksReady,
+        }));
+      }
+
+      return data;
+    },
+    [projectId],
+  );
+
+  const startAnalysisPipeline = useCallback(
+    async (force = false) => {
+      if (runningRef.current) return;
+      runningRef.current = true;
+      setStartError(null);
+      setIsStalled(false);
+
+      try {
+        // Step 1: Build code knowledge & embeddings (capped runtime, ~15s)
+        const hasKnowledgeReady = state.chunksReady || state.progressPercent >= 75;
+        if (!hasKnowledgeReady || force) {
+          setState((current) => ({
+            ...current,
+            status: "processing",
+            progressStep: current.progressStep ?? "Starting analysis...",
+            progressPercent: Math.max(current.progressPercent, 30),
+          }));
+
+          await executeStage("knowledge", force);
+        }
+
+        // Step 2: Health report generation & AI review (capped runtime, ~15s)
+        setState((current) => ({
+          ...current,
+          status: "processing",
+          progressStep: "Reviewing code with AI...",
+          progressPercent: Math.max(current.progressPercent, 80),
+        }));
+
+        await executeStage("report", force);
+      } catch (err) {
+        const errorMsg =
+          err instanceof Error ? err.message : "Analysis interrupted.";
+
+        // Seamless single auto-retry before alerting the user
+        if (autoRetryCountRef.current < 1) {
+          autoRetryCountRef.current += 1;
+          runningRef.current = false;
+          window.setTimeout(() => {
+            void startAnalysisPipeline(true);
+          }, 1200);
+          return;
+        }
+
+        setStartError(errorMsg);
+        setIsStalled(true);
+      } finally {
+        runningRef.current = false;
+      }
+    },
+    [executeStage, state.chunksReady, state.progressPercent],
+  );
+
   useEffect(() => {
     if (startedRef.current) return;
     if (state.status === "completed" || state.status === "failed") return;
-    if (state.status === "processing" && state.progressPercent >= 30) return;
 
     startedRef.current = true;
-
-    void (async () => {
-      try {
-        const response = await fetch(`/api/projects/${projectId}/analyze`, {
-          method: "POST",
-        });
-
-        let data: {
-          ok?: boolean;
-          error?: string;
-          status?: ProgressState["status"];
-          progressStep?: string;
-          progressPercent?: number;
-        } | null = null;
-
-        const text = await response.text();
-        if (text) {
-          try {
-            data = JSON.parse(text);
-          } catch {
-            // Non-JSON or HTML response (e.g. Vercel 504 Gateway Timeout)
-            if (!response.ok) {
-              setStartError(
-                "Execution took longer than serverless host limit. Your code progress is saved — click Resume below.",
-              );
-              setIsStalled(true);
-              return;
-            }
-          }
-        }
-
-        if (data) {
-          if (!response.ok && data.error) {
-            setStartError(data.error);
-            return;
-          }
-          if (data.status) {
-            setState((current) => ({
-              ...current,
-              status: data.status ?? current.status,
-              progressStep: data.progressStep ?? current.progressStep,
-              progressPercent: data.progressPercent ?? current.progressPercent,
-            }));
-          }
-        } else if (!response.ok) {
-          setStartError(
-            "Execution paused by serverless timeout. Click Resume below to continue.",
-          );
-          setIsStalled(true);
-        }
-      } catch {
-        // Network error / connection drop
-        setIsStalled(true);
-      }
-    })();
-  }, [projectId, state.progressPercent, state.status]);
+    void startAnalysisPipeline(false);
+  }, [startAnalysisPipeline, state.status]);
 
   useEffect(() => {
     if (state.status === "completed") {
@@ -153,61 +206,9 @@ export function AnalysisProgress({
   async function retry(force = false) {
     setStartError(null);
     setIsStalled(false);
+    autoRetryCountRef.current = 0;
     startedRef.current = true;
-    setState((current) => ({
-      ...current,
-      status: "processing",
-      progressStep: "Resuming analysis...",
-      progressPercent: Math.max(current.progressPercent, 30),
-      errorMessage: null,
-    }));
-
-    try {
-      const response = await fetch(
-        `/api/projects/${projectId}/analyze${force ? "?force=true" : ""}`,
-        { method: "POST" },
-      );
-
-      let data: {
-        ok?: boolean;
-        error?: string;
-        status?: ProgressState["status"];
-        progressStep?: string;
-        progressPercent?: number;
-      } | null = null;
-
-      const text = await response.text();
-      if (text) {
-        try {
-          data = JSON.parse(text);
-        } catch {
-          if (!response.ok) {
-            setStartError(
-              "Execution timed out. Click Resume again to continue to the next step.",
-            );
-            setIsStalled(true);
-            return;
-          }
-        }
-      }
-
-      if (data) {
-        if (!response.ok && data.error) {
-          setStartError(data.error);
-          return;
-        }
-        if (data.status) {
-          setState((current) => ({
-            ...current,
-            status: data.status ?? current.status,
-            progressStep: data.progressStep ?? current.progressStep,
-            progressPercent: data.progressPercent ?? current.progressPercent,
-          }));
-        }
-      }
-    } catch {
-      setIsStalled(true);
-    }
+    void startAnalysisPipeline(force);
   }
 
   return (
@@ -339,7 +340,9 @@ export function AnalysisProgress({
               onClick={() => void retry(true)}
               className="bg-[linear-gradient(135deg,#06b6d4_0%,#0e7490_100%)] text-white hover:opacity-90"
             >
-              {state.progressPercent >= 45 ? "Resume analysis" : "Retry analysis"}
+              {state.progressPercent >= 45 || state.chunksReady
+                ? "Resume analysis"
+                : "Retry analysis"}
             </Button>
             <Link
               href={`/projects/${projectId}`}

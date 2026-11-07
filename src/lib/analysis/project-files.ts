@@ -52,6 +52,8 @@ export type ProjectSourceFile = {
   content: string;
 };
 
+const memoryFileCache = new Map<string, { files: ProjectSourceFile[]; timestamp: number }>();
+
 function githubFullName(project: {
   name: string;
   repositoryUrl: string | null;
@@ -65,6 +67,11 @@ function githubFullName(project: {
 export async function loadProjectSourceFiles(
   projectId: string,
 ): Promise<ProjectSourceFile[]> {
+  const cached = memoryFileCache.get(projectId);
+  if (cached && Date.now() - cached.timestamp < 10 * 60 * 1000) {
+    return cached.files;
+  }
+
   const root = getProjectDataDir(projectId);
 
   try {
@@ -84,7 +91,10 @@ export async function loadProjectSourceFiles(
       files.push({ relativePath: entry.relativePath, content });
     }
 
-    if (files.length > 0) return files;
+    if (files.length > 0) {
+      memoryFileCache.set(projectId, { files, timestamp: Date.now() });
+      return files;
+    }
   } catch {
     // Disk cache missed in this serverless container — fall through to database/GitHub
   }
@@ -118,12 +128,15 @@ export async function loadProjectSourceFiles(
     // Cache locally for the rest of this execution lifecycle
     await persistProjectFiles(projectId, extracted.sourceFiles);
 
-    return extracted.sourceFiles
+    const sourceFiles = extracted.sourceFiles
       .filter((file) => isSourceFile(file.relativePath))
       .map((file) => ({
         relativePath: file.relativePath,
         content: file.content,
       }));
+
+    memoryFileCache.set(projectId, { files: sourceFiles, timestamp: Date.now() });
+    return sourceFiles;
   }
 
   throw new Error("No source files found to analyze. Please re-import the project.");

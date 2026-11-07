@@ -26,6 +26,7 @@ export default async function ProjectProgressPage({ params }: PageProps) {
       errorMessage: true,
       framework: true,
       fileCount: true,
+      _count: { select: { chunks: true } },
       report: { select: { healthScore: true } },
     },
   });
@@ -62,6 +63,7 @@ export default async function ProjectProgressPage({ params }: PageProps) {
           framework: project.framework,
           fileCount: project.fileCount,
           report: project.report,
+          chunksReady: project._count.chunks > 0,
         }}
       />
     </main>

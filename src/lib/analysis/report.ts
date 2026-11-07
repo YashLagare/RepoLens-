@@ -1,4 +1,5 @@
 import { computeDeterministicMetrics } from "@/lib/analysis/metrics";
+import { setProjectProgress } from "@/lib/analysis/progress";
 import { loadProjectSourceFiles } from "@/lib/analysis/project-files";
 import { runLlmHealthReview } from "@/lib/analysis/report-llm";
 import {
@@ -80,6 +81,11 @@ export async function generateProjectReport(
         "No code chunks available. Build project knowledge before generating a report.",
       );
     }
+
+    await setProjectProgress(projectId, {
+      step: "Reviewing code with AI",
+      percent: 92,
+    });
 
     const llm = await runLlmHealthReview({
       projectName: project.name,

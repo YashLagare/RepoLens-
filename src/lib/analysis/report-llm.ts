@@ -36,7 +36,7 @@ function formatChunks(
         `### Chunk ${index + 1}`,
         `File: ${chunk.filePath} (${lines})`,
         "```",
-        chunk.content.slice(0, 2500),
+        chunk.content.slice(0, 1800),
         "```",
       ].join("\n");
     })
@@ -60,7 +60,7 @@ export async function runLlmHealthReview(options: {
     endLine: number | null;
   }>;
 }): Promise<LlmReportResult> {
-  const sampled = options.chunks.slice(0, 24);
+  const sampled = options.chunks.slice(0, 16);
 
   const { object } = await generateObject({
     model: getStructuredLanguageModel(),

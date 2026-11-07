@@ -34,10 +34,10 @@ export async function GET(_request: Request, context: RouteContext) {
     return Response.json({ error: "Project not found" }, { status: 404 });
   }
 
-  // Detect if a serverless background worker timed out (no updates for > 50s while processing)
+  // Detect if a serverless background worker timed out (no updates for > 90s while processing)
   const isStalled =
     project.status === "processing" &&
-    Date.now() - project.updatedAt.getTime() > 50 * 1000;
+    Date.now() - project.updatedAt.getTime() > 90 * 1000;
 
   return Response.json({
     id: project.id,

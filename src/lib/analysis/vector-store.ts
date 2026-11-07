@@ -1,5 +1,6 @@
 import type { CodeChunkDraft } from "@/lib/analysis/chunking";
 import { embedTexts, toVectorLiteral } from "@/lib/analysis/embeddings";
+import { setProjectProgress } from "@/lib/analysis/progress";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { randomUUID } from "crypto";
@@ -50,7 +51,16 @@ export async function storeProjectChunks(
     endLine: draft.endLine,
   }));
 
-  const embeddings = await embedTexts(records.map((record) => record.content));
+  const embeddings = await embedTexts(
+    records.map((record) => record.content),
+    async (completed, total) => {
+      const stepPercent = 65 + Math.round((completed / total) * 8);
+      await setProjectProgress(projectId, {
+        step: "Generating embeddings",
+        percent: Math.min(stepPercent, 73),
+      });
+    },
+  );
 
   const INSERT_BATCH = 100;
   for (let i = 0; i < records.length; i += INSERT_BATCH) {
