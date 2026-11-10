@@ -108,14 +108,16 @@ export function AnalysisProgress({
         } catch {
           if (!response.ok) {
             throw new Error(
-              "Execution paused by serverless timeout. Your code chunks and progress are safely preserved.",
+              response.status === 504 || response.status === 502
+                ? "Execution paused by serverless timeout. Your code chunks and progress are safely preserved."
+                : `Server returned error (${response.status}).`,
             );
           }
         }
       }
 
       if (!response.ok || (data && !data.ok)) {
-        throw new Error(data?.error ?? "Stage execution interrupted.");
+        throw new Error(data?.error ?? `Stage execution failed with status ${response.status}.`);
       }
 
       if (data?.status) {
@@ -177,8 +179,16 @@ export function AnalysisProgress({
           return;
         }
 
+        const isTimeout =
+          errorMsg.toLowerCase().includes("timeout") ||
+          errorMsg.toLowerCase().includes("timed out") ||
+          errorMsg.toLowerCase().includes("504") ||
+          errorMsg.toLowerCase().includes("gateway");
+
         setStartError(errorMsg);
-        setIsStalled(true);
+        if (isTimeout) {
+          setIsStalled(true);
+        }
       } finally {
         runningRef.current = false;
       }
@@ -323,14 +333,20 @@ export function AnalysisProgress({
             <AlertCircle className="size-5 shrink-0 text-amber-500 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-foreground">
-                {isStalled || startError?.includes("timed out") || startError?.includes("limit")
+                {isStalled ||
+                startError?.toLowerCase().includes("timeout") ||
+                startError?.toLowerCase().includes("timed out") ||
+                startError?.toLowerCase().includes("504")
                   ? "Execution paused by cloud timeout"
                   : (startError ?? state.errorMessage ?? "Analysis paused.")}
               </p>
               <p className="mt-1 text-xs text-[color:var(--app-muted)]">
-                {isStalled || startError?.includes("timed out") || startError?.includes("limit")
+                {isStalled ||
+                startError?.toLowerCase().includes("timeout") ||
+                startError?.toLowerCase().includes("timed out") ||
+                startError?.toLowerCase().includes("504")
                   ? "Serverless containers have strict execution limits. Your code chunks and progress are safely preserved in the database. Click Resume to continue without restarting from scratch."
-                  : "An unexpected issue interrupted analysis. Click Retry to continue."}
+                  : (startError ?? state.errorMessage ?? "An unexpected issue interrupted analysis. Click Retry to continue.")}
               </p>
             </div>
           </div>

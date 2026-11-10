@@ -102,21 +102,35 @@ export async function loadProjectSourceFiles(
   // Fallback: Fetch directly from GitHub for serverless execution
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    include: { user: { select: { githubAccessToken: true } } },
+    include: {
+      user: {
+        select: {
+          githubAccessToken: true,
+          accounts: {
+            where: { provider: "github" },
+            select: { access_token: true },
+          },
+        },
+      },
+    },
   });
 
   if (!project) {
     throw new Error("Project not found.");
   }
 
-  if (project.source === "github" && project.user.githubAccessToken) {
+  const githubToken =
+    project.user.githubAccessToken ||
+    project.user.accounts?.[0]?.access_token;
+
+  if (project.source === "github" && githubToken) {
     const fullName = githubFullName(project);
     if (!fullName) {
       throw new Error("Could not determine GitHub repository name.");
     }
 
     const zipBuffer = await downloadGitHubZipball(
-      project.user.githubAccessToken,
+      githubToken,
       fullName,
     );
 

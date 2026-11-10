@@ -170,11 +170,18 @@ export async function listGitHubRepos(
 }
 
 export async function downloadGitHubZipball(
-  encryptedToken: string,
+  encryptedTokenOrRaw: string,
   fullName: string,
   ref?: string,
 ): Promise<Buffer> {
-  const token = decryptToken(encryptedToken);
+  let token = encryptedTokenOrRaw;
+  if (encryptedTokenOrRaw.includes(":")) {
+    try {
+      token = decryptToken(encryptedTokenOrRaw);
+    } catch {
+      token = encryptedTokenOrRaw;
+    }
+  }
   const url = ref
     ? `${GITHUB_API}/repos/${fullName}/zipball/${encodeURIComponent(ref)}`
     : `${GITHUB_API}/repos/${fullName}/zipball`;
