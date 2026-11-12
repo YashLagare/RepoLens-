@@ -70,7 +70,7 @@ Engineering teams, technical leads, and code reviewers frequently spend hours na
 
 ## 1 Executive Summary
 
-RepoLens is a developer tool built with Next.js 16, React 19, TypeScript, PostgreSQL (`pgvector`), and Prisma. It automates the extraction, AST parsing (Tree-sitter), vector embedding (`@xenova/transformers` all-MiniLM-L6-v2), and LLM-assisted review (OpenRouter) of JavaScript and TypeScript repositories.
+RepoLens is a developer tool built with Next.js 16, React 19, TypeScript, PostgreSQL (`pgvector`), and Prisma. It automates the extraction, AST parsing (Tree-sitter), cloud vector embedding (OpenRouter `text-embedding-3-small`, 384 dimensions; local `@xenova/transformers` all-MiniLM-L6-v2 as fallback), and LLM-assisted review (OpenRouter) of JavaScript and TypeScript repositories.
 
 The system computes category health scores across architecture, security, performance, code quality, and testing by combining static heuristics with structured LLM review. It surfaces prioritized issue lists and exposes a RAG-backed conversational interface alongside an interactive code explorer. User identity is managed via Auth.js (supporting Google OAuth, GitHub OAuth, and email/password credentials), and subscription billing is handled through Stripe.
 
@@ -79,12 +79,12 @@ The system computes category health scores across architecture, security, perfor
 ## 2 Project Overview
 
 ### Objective
-Provide automated static analysis, structural code chunking, and contextual conversational querying for JavaScript and TypeScript repositories without requiring external embedding APIs or sending unchunked repository archives to LLMs.
+Provide automated static analysis, structural code chunking, and contextual conversational querying for JavaScript and TypeScript repositories using fast cloud embeddings with a local fallback.
 
 ### Scope
 - Parsing and chunking `.js`, `.jsx`, `.ts`, and `.tsx` source files with architectural relevance prioritization.
 - Filtering build artifacts, dependencies, and binary assets (`node_modules`, `.git`, `.next`, `dist`, `build`, `coverage`, lockfiles).
-- Local 384-dimensional vector embedding generation with direct tensor inference.
+- Cloud-first 384-dimensional vector embedding via OpenRouter (`openai/text-embedding-3-small`), with local `@xenova/transformers` (all-MiniLM-L6-v2) as a fallback for environments without API access.
 - Cosine similarity vector search inside PostgreSQL using the `pgvector` extension.
 - Structured LLM evaluation for category summaries and prioritized issues via OpenRouter (`meta-llama/llama-3.3-70b-instruct`).
 - Streaming conversational assistant with metadata-linked source citations.
@@ -92,7 +92,7 @@ Provide automated static analysis, structural code chunking, and contextual conv
 ### Primary Modules
 1. **Ingestion & Extraction Engine**: GitHub API zipball streaming and JSZip decompression with size constraints.
 2. **Parser & Chunking Pipeline**: Tree-sitter-based structural AST parsing, priority file scoring (`scoreChunkPriority`), and a 32-chunk high-signal budget prioritized for fast serverless execution.
-3. **Vector & RAG Subsystem**: Local MiniLM embedding pipeline with direct tensor inference and PostgreSQL vector distance querying (`<=>`).
+3. **Vector & RAG Subsystem**: Cloud embedding pipeline (OpenRouter `text-embedding-3-small`, 384-dim; local MiniLM fallback) with PostgreSQL vector distance querying (`<=>`). Client-side analysis fires exactly once on mount via a stable `stateRef` mirror, preventing stale-closure bugs across poll ticks.
 4. **Health Review Engine**: Deterministic static metric extraction combined with structured LLM review via OpenRouter (`meta-llama/llama-3.3-70b-instruct`) with high-signal chunk budget optimization.
 5. **Staged Analysis & Timeout Watchdog**: Resumable 2-stage pipeline (`stage=knowledge` -> `stage=report`) with automated client orchestration, active batch heartbeats, in-memory repository caching, and one-click resumption.
 6. **Unified Workspace Navigation**: Standardized 5-tab subnavigation bar (`ProjectNav`) with active route highlighting across Overview, Health Report, Issues, Code Explorer, and AI Chat.
@@ -277,7 +277,7 @@ RepoLens/
 - **Syntax Parsing**: Uses Tree-sitter (`tree-sitter-javascript`, `tree-sitter-typescript`) to parse ASTs and split source code along logical declarations (functions, classes, methods, type aliases, exports).
 - **Architectural Prioritization**: Scores files via `scoreChunkPriority` to prioritize core application logic (`src/app/`, `components/`, `lib/`, `api/`) over config and utility files within a 32-chunk high-signal budget per project.
 - **Chunk Sizing**: Targets 200–400 tokens per chunk with fallback linear splitting for oversized files and merging for small adjacent nodes.
-- **Local Embedding**: Generates 384-dimensional vector embeddings using `@xenova/transformers` (`all-MiniLM-L6-v2`) in batches of 24 locally in the Node.js process using direct tensor inference, keeping execution under 10 seconds.
+- **Cloud-First Embedding**: Generates 384-dimensional vector embeddings via OpenRouter (`openai/text-embedding-3-small`) in ~300 ms, with `@xenova/transformers` (all-MiniLM-L6-v2) as a local in-process fallback for environments without an API key.
 - **PostgreSQL Vector Persistence**: Inserts embeddings into `CodeChunk.embedding` as `vector(384)` for similarity searches.
 
 ### 3. Codebase Health Review & Issue Generation
@@ -292,7 +292,7 @@ RepoLens/
   - Computes overall health score as the arithmetic mean of the five category scores.
 
 ### 4. Grounded Conversational AI (RAG)
-- **Vector Search**: Embeds user questions with MiniLM and executes a cosine distance search (`1 - (embedding <=> $1::vector)`) filtered by `projectId` (top 8 chunks).
+- **Vector Search**: Embeds user questions via OpenRouter (`text-embedding-3-small`) and executes a cosine distance search (`1 - (embedding <=> $1::vector)`) filtered by `projectId` (top 8 chunks).
 - **Context Injection**: Injects retrieved code chunks with file paths and line ranges into the system prompt.
 - **Streaming UI**: Uses Vercel AI SDK `streamText` to deliver tokens over SSE, attaching cited file paths and line numbers as stream metadata.
 
@@ -827,11 +827,12 @@ SSE Stream to Client with Cited Sources
 
 ### Implemented Architectural Considerations
 - **Automated Staged Execution**: Decouples knowledge generation from AI health review, allowing each stage to comfortably complete within 15–20s on standard serverless tiers without risking 504 timeouts.
-- **In-Process Embeddings & Heartbeats**: Runs MiniLM via `@xenova/transformers` locally in Node.js while dispatching batch heartbeats to keep container timestamps fresh.
+- **Cloud Embeddings & Heartbeats**: Calls OpenRouter (`text-embedding-3-small`) for sub-500 ms 384-dim embeddings while dispatching batch heartbeats to keep container timestamps fresh. Local MiniLM (`@xenova/transformers`) is used as a fallback.
+- **Mount-Once Pipeline Orchestration**: The client-side `AnalysisProgress` component fires `startAnalysisPipeline` exactly once on mount using a `stateRef` mirror and an empty `[]` trigger `useEffect`, eliminating stale-closure and React Strict Mode double-fire bugs that previously left projects stuck in `"queued"` state.
 - **In-Memory File Caching**: Avoids redundant archive streaming and file decompression between pipeline stages.
 - **Optimized LLM Prompt Sampling**: Limits prompt payload to 16 high-signal chunks with capped snippet lengths, reducing token volume by 50%+ and halving AI response latency.
 - **Connection Pooling**: Employs `pg.Pool` with `@prisma/adapter-pg` to reuse connections across server actions and route handlers.
-- **Batch Processing**: Chunks are processed in batches (24 for embeddings, 100 for database insertions) during repository indexing.
+- **Batch Processing**: Chunks are processed in batches (16 for embeddings, 100 for database insertions) during repository indexing.
 - **Streaming Responses**: Uses Server-Sent Events (SSE) via the Vercel AI SDK for interactive token streaming.
 
 ### Potential Bottlenecks
@@ -855,7 +856,8 @@ SSE Stream to Client with Cited Sources
 ## 21 Challenges & Engineering Decisions
 
 1. **AST Parsing in Full-Stack Environment**: Tree-sitter integration preserves structural node boundaries (functions, classes) rather than splitting code by arbitrary character limits.
-2. **Local vs External Embeddings**: Utilizing `@xenova/transformers` locally in Node.js avoids third-party embedding billing while maintaining 384-dimensional retrieval precision.
+2. **Cloud vs Local Embeddings**: OpenRouter `text-embedding-3-small` runs in ~300 ms on serverless containers, avoiding the EROFS read-only filesystem constraint that blocks `@xenova/transformers` ONNX model downloads in production. Local MiniLM remains available as a fallback for self-hosted deployments.
+3. **Stale-Closure Pipeline Bug (Fixed)**: The client-side `AnalysisProgress` trigger `useEffect` previously listed `startAnalysisPipeline` as a dependency; because that callback was recreated on every 1.5 s poll tick (its deps included `state.chunksReady` / `state.progressPercent`), and `startedRef.current` was already `true`, analysis never re-fired — leaving projects stuck in `"queued"` state forever. Fixed by moving to a mount-only `[]` dep array and a `stateRef` mirror so the callback always reads live state without being re-created.
 3. **Unified Relational & Vector Storage**: Leveraging `pgvector` inside PostgreSQL keeps chunk embeddings alongside relational project and user records without requiring a dedicated vector database service.
 4. **Serverless Limits & Resilient Pipeline Orchestration**: Serverless functions enforce strict 15s–60s timeouts. We addressed this by orchestrating a 2-stage automated pipeline (`stage=knowledge` -> `stage=report`) with active batch heartbeats, in-memory caching, and seamless auto-resumption.
 
