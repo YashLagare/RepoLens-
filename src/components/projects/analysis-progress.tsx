@@ -32,11 +32,19 @@ export function AnalysisProgress({
 }) {
   const router = useRouter();
   const [state, setState] = useState(initial);
+  // Keep a ref mirror of state so callbacks always see the latest values
+  // without needing to be listed as useCallback / useEffect dependencies.
+  const stateRef = useRef(state);
   const startedRef = useRef(false);
   const runningRef = useRef(false);
   const autoRetryCountRef = useRef(0);
   const [startError, setStartError] = useState<string | null>(null);
   const [isStalled, setIsStalled] = useState(false);
+
+  // Keep stateRef in sync so pipeline callbacks always read the latest state.
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
     let cancelled = false;
@@ -143,8 +151,11 @@ export function AnalysisProgress({
       setIsStalled(false);
 
       try {
+        // Read live state via ref so we never rely on stale closure values.
+        const hasKnowledgeReady =
+          stateRef.current.chunksReady || stateRef.current.progressPercent >= 75;
+
         // Step 1: Build code knowledge & embeddings (capped runtime, ~15s)
-        const hasKnowledgeReady = state.chunksReady || state.progressPercent >= 75;
         if (!hasKnowledgeReady || force) {
           setState((current) => ({
             ...current,
@@ -193,16 +204,26 @@ export function AnalysisProgress({
         runningRef.current = false;
       }
     },
-    [executeStage, state.chunksReady, state.progressPercent],
+    // executeStage is stable (depends only on projectId which never changes).
+    // stateRef.current is read at call time — no need to list it as a dep.
+    [executeStage],
   );
 
+  // Fire exactly once on mount. startedRef prevents double-fire (React Strict Mode).
+  // We deliberately omit startAnalysisPipeline from deps — it is stable because
+  // executeStage only depends on projectId, and stateRef gives it live state.
   useEffect(() => {
     if (startedRef.current) return;
-    if (state.status === "completed" || state.status === "failed") return;
+    if (
+      stateRef.current.status === "completed" ||
+      stateRef.current.status === "failed"
+    )
+      return;
 
     startedRef.current = true;
     void startAnalysisPipeline(false);
-  }, [startAnalysisPipeline, state.status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (state.status === "completed") {
