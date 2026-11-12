@@ -34,8 +34,6 @@ Engineering teams, technical leads, and code reviewers frequently spend hours na
 
 ---
 
-### Project Cover Screenshot
-
 ```text
 [INSERT_PROJECT_COVER_SCREENSHOT]
 ```
