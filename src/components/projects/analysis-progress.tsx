@@ -114,18 +114,28 @@ export function AnalysisProgress({
         try {
           data = JSON.parse(text);
         } catch {
-          if (!response.ok) {
+          // Server returned non-JSON (Vercel platform HTML error page)
+          if (response.status === 504 || response.status === 502) {
             throw new Error(
-              response.status === 504 || response.status === 502
-                ? "Execution paused by serverless timeout. Your code chunks and progress are safely preserved."
-                : `Server returned error (${response.status}).`,
+              "Execution paused by serverless timeout. Your code chunks and progress are safely preserved.",
             );
+          }
+          if (response.status === 500) {
+            throw new Error(
+              "Analysis encountered a server error. Click Retry to try again.",
+            );
+          }
+          if (!response.ok) {
+            throw new Error(`Server error (${response.status}). Click Retry to try again.`);
           }
         }
       }
 
       if (!response.ok || (data && !data.ok)) {
-        throw new Error(data?.error ?? `Stage execution failed with status ${response.status}.`);
+        // Surface the real server error message directly
+        throw new Error(
+          data?.error ?? `Analysis server error (${response.status}). Click Retry to try again.`,
+        );
       }
 
       if (data?.status) {

@@ -1,57 +1,16 @@
-// import { isSourceFile } from "@/lib/files/filters";
-// import {
-//   getProjectDataDir,
-//   type ProjectManifestEntry,
-// } from "@/lib/files/storage";
-// import { readFile } from "fs/promises";
-// import path from "path";
-
-// export type ProjectSourceFile = {
-//   relativePath: string;
-//   content: string;
-// };
-
-// /** Load extracted JS/TS source files for a project from disk. */
-// export async function loadProjectSourceFiles(
-//   projectId: string,
-// ): Promise<ProjectSourceFile[]> {
-//   const root = getProjectDataDir(projectId);
-//   const manifestRaw = await readFile(path.join(root, "manifest.json"), "utf8");
-//   const manifest = JSON.parse(manifestRaw) as ProjectManifestEntry[];
-
-//   const files: ProjectSourceFile[] = [];
-
-//   for (const entry of manifest) {
-//     if (!isSourceFile(entry.relativePath)) continue;
-//     const content = await readFile(
-//       path.join(root, "files", entry.relativePath),
-//       "utf8",
-//     );
-//     files.push({ relativePath: entry.relativePath, content });
-//   }
-
-//   return files;
-// }
-
-
-
 import { prisma } from "@/lib/db";
 import { extractFromZipBuffer } from "@/lib/files/extract";
 import { isSourceFile } from "@/lib/files/filters";
-import {
-  getProjectDataDir,
-  persistProjectFiles,
-  type ProjectManifestEntry,
-} from "@/lib/files/storage";
 import { downloadGitHubZipball } from "@/lib/github";
-import { readFile } from "fs/promises";
-import path from "path";
 
 export type ProjectSourceFile = {
   relativePath: string;
   content: string;
 };
 
+// In-memory cache valid for 10 minutes within the same serverless container lifecycle.
+// On Vercel each invocation may get a fresh container, so this only helps
+// when knowledge + report stages run in the same invocation (auto mode).
 const memoryFileCache = new Map<string, { files: ProjectSourceFile[]; timestamp: number }>();
 
 function githubFullName(project: {
@@ -63,52 +22,27 @@ function githubFullName(project: {
   return match?.[1]?.replace(/\.git$/i, "") ?? null;
 }
 
-/** Load extracted JS/TS source files for a project, with auto-fetch fallback for serverless. */
+/** Load JS/TS source files for a project. Always fetches from GitHub on serverless
+ *  (disk cache is unreliable across invocations). Uses in-memory cache within a run. */
 export async function loadProjectSourceFiles(
   projectId: string,
 ): Promise<ProjectSourceFile[]> {
+  // 1. Fast path: same-invocation in-memory cache
   const cached = memoryFileCache.get(projectId);
   if (cached && Date.now() - cached.timestamp < 10 * 60 * 1000) {
     return cached.files;
   }
 
-  const root = getProjectDataDir(projectId);
-
-  try {
-    const manifestRaw = await readFile(
-      path.join(root, "manifest.json"),
-      "utf8",
-    );
-    const manifest = JSON.parse(manifestRaw) as ProjectManifestEntry[];
-
-    const files: ProjectSourceFile[] = [];
-    for (const entry of manifest) {
-      if (!isSourceFile(entry.relativePath)) continue;
-      const content = await readFile(
-        path.join(root, "files", entry.relativePath),
-        "utf8",
-      );
-      files.push({ relativePath: entry.relativePath, content });
-    }
-
-    if (files.length > 0) {
-      memoryFileCache.set(projectId, { files, timestamp: Date.now() });
-      return files;
-    }
-  } catch {
-    // Disk cache missed in this serverless container — fall through to database/GitHub
-  }
-
-  // Fallback: Fetch directly from GitHub for serverless execution
+  // 2. Fetch the project + tokens from DB
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     include: {
       user: {
         select: {
-          githubAccessToken: true,
+          githubAccessToken: true,          // encrypted via custom GitHub connect flow
           accounts: {
             where: { provider: "github" },
-            select: { access_token: true },
+            select: { access_token: true }, // raw token from Auth.js GitHub OAuth
           },
         },
       },
@@ -119,39 +53,54 @@ export async function loadProjectSourceFiles(
     throw new Error("Project not found.");
   }
 
-  const githubToken =
-    project.user.githubAccessToken ||
-    project.user.accounts?.[0]?.access_token;
-
-  if (project.source === "github" && githubToken) {
-    const fullName = githubFullName(project);
-    if (!fullName) {
-      throw new Error("Could not determine GitHub repository name.");
-    }
-
-    const zipBuffer = await downloadGitHubZipball(
-      githubToken,
-      fullName,
+  if (project.source !== "github") {
+    throw new Error(
+      "Only GitHub-imported projects are supported for analysis. Please re-import the project.",
     );
-
-    const extracted = await extractFromZipBuffer(zipBuffer, { stripRoot: true });
-    if (!extracted.ok) {
-      throw new Error(extracted.error);
-    }
-
-    // Cache locally for the rest of this execution lifecycle
-    await persistProjectFiles(projectId, extracted.sourceFiles);
-
-    const sourceFiles = extracted.sourceFiles
-      .filter((file) => isSourceFile(file.relativePath))
-      .map((file) => ({
-        relativePath: file.relativePath,
-        content: file.content,
-      }));
-
-    memoryFileCache.set(projectId, { files: sourceFiles, timestamp: Date.now() });
-    return sourceFiles;
   }
 
-  throw new Error("No source files found to analyze. Please re-import the project.");
+  // Prefer the custom-connect token (encrypted) over the Auth.js OAuth token (raw)
+  const githubToken =
+    project.user.githubAccessToken ??
+    project.user.accounts?.[0]?.access_token ??
+    null;
+
+  if (!githubToken) {
+    throw new Error(
+      "No GitHub access token found. Please connect your GitHub account in Settings and re-import the project.",
+    );
+  }
+
+  const fullName = githubFullName(project);
+  if (!fullName) {
+    throw new Error(
+      `Could not determine GitHub repository name from project name "${project.name}". Please re-import.`,
+    );
+  }
+
+  // 3. Download from GitHub (handles encrypted + raw tokens)
+  const zipBuffer = await downloadGitHubZipball(githubToken, fullName);
+
+  // 4. Extract ZIP
+  const extracted = await extractFromZipBuffer(zipBuffer, { stripRoot: true });
+  if (!extracted.ok) {
+    throw new Error(`Failed to extract repository archive: ${extracted.error}`);
+  }
+
+  const sourceFiles = extracted.sourceFiles
+    .filter((file) => isSourceFile(file.relativePath))
+    .map((file) => ({
+      relativePath: file.relativePath,
+      content: file.content,
+    }));
+
+  if (sourceFiles.length === 0) {
+    throw new Error(
+      "No JavaScript/TypeScript source files found in the repository.",
+    );
+  }
+
+  // 5. Cache in memory for subsequent calls within this invocation
+  memoryFileCache.set(projectId, { files: sourceFiles, timestamp: Date.now() });
+  return sourceFiles;
 }

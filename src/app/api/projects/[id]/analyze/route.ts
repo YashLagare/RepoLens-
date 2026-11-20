@@ -88,7 +88,7 @@ export async function POST(_request: Request, context: RouteContext) {
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Analysis failed.";
-    console.error("Analysis execution error:", error);
+    console.error("Analysis execution error:", errorMessage, error);
 
     let projectId: string | undefined;
     try {
@@ -98,10 +98,9 @@ export async function POST(_request: Request, context: RouteContext) {
       // ignore
     }
 
-    let updated = null;
     if (projectId) {
       try {
-        updated = await prisma.project.update({
+        await prisma.project.update({
           where: { id: projectId },
           data: {
             status: "failed",
@@ -114,12 +113,14 @@ export async function POST(_request: Request, context: RouteContext) {
       }
     }
 
+    // Always return JSON — never let Vercel's platform HTML error page reach the client.
+    // Include the real error message so the UI can display it.
     return Response.json(
       {
         ok: false,
         status: "failed",
         progressStep: "Analysis failed",
-        progressPercent: updated?.progressPercent ?? 0,
+        progressPercent: 0,
         error: errorMessage,
       },
       { status: 500 },
