@@ -109,28 +109,44 @@ export async function extractFromZipBuffer(
   }
 
   const allRelativePaths = keptEntries.map((item) => item.relativePath);
-  const sourceFiles: ExtractedFile[] = [];
 
-  // Also keep package.json for framework detection even if not a source file
-  for (const item of keptEntries) {
+  // Decompress candidates concurrently in memory
+  const candidates = keptEntries.filter((item) => {
     const isPackageJson =
       item.relativePath === "package.json" ||
       item.relativePath.endsWith("/package.json");
-    if (!isSourceFile(item.relativePath) && !isPackageJson) continue;
+    return isSourceFile(item.relativePath) || isPackageJson;
+  });
 
-    const content = await item.entry.async("string");
-    const sizeBytes = Buffer.byteLength(content, "utf8");
+  const extractedList = await Promise.all(
+    candidates.map(async (item) => {
+      try {
+        const content = await item.entry.async("string");
+        const sizeBytes = Buffer.byteLength(content, "utf8");
+        if (sizeBytes > MAX_FILE_SIZE_BYTES) {
+          return { skipped: item.relativePath };
+        }
+        return {
+          file: {
+            relativePath: item.relativePath,
+            content,
+            sizeBytes,
+          },
+        };
+      } catch {
+        return null;
+      }
+    }),
+  );
 
-    if (sizeBytes > MAX_FILE_SIZE_BYTES) {
-      skippedLargeFiles.push(item.relativePath);
-      continue;
+  const sourceFiles: ExtractedFile[] = [];
+  for (const res of extractedList) {
+    if (!res) continue;
+    if ("skipped" in res && res.skipped) {
+      skippedLargeFiles.push(res.skipped);
+    } else if ("file" in res && res.file) {
+      sourceFiles.push(res.file);
     }
-
-    sourceFiles.push({
-      relativePath: item.relativePath,
-      content,
-      sizeBytes,
-    });
   }
 
   const analyzable = sourceFiles.filter((file) =>

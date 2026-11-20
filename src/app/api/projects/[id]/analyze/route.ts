@@ -113,8 +113,8 @@ export async function POST(_request: Request, context: RouteContext) {
       }
     }
 
-    // Always return JSON — never let Vercel's platform HTML error page reach the client.
-    // Include the real error message so the UI can display it.
+    // Always return JSON with both error and message fields so client
+    // frameworks and UI handlers can display the exact reason.
     return Response.json(
       {
         ok: false,
@@ -122,6 +122,7 @@ export async function POST(_request: Request, context: RouteContext) {
         progressStep: "Analysis failed",
         progressPercent: 0,
         error: errorMessage,
+        message: errorMessage,
       },
       { status: 500 },
     );

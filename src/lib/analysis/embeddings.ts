@@ -1,14 +1,5 @@
-import { env, pipeline } from "@xenova/transformers";
 import os from "os";
 import path from "path";
-
-// In serverless environments, root is read-only. Ensure Hugging Face writes to /tmp.
-env.allowLocalModels = false;
-try {
-  env.cacheDir = path.join(os.tmpdir(), ".transformers-cache");
-} catch {
-  // Ignore fallback if os.tmpdir() fails
-}
 
 export const EMBEDDING_DIMENSIONS = 384;
 const BATCH_SIZE = 24;
@@ -29,10 +20,19 @@ let extractorPromise: Promise<FeatureExtractor> | null = null;
 
 async function getExtractor(): Promise<FeatureExtractor> {
   if (!extractorPromise) {
-    extractorPromise = pipeline(
-      "feature-extraction",
-      MODEL_ID,
-    ) as Promise<FeatureExtractor>;
+    extractorPromise = (async () => {
+      const { env, pipeline } = await import("@xenova/transformers");
+      env.allowLocalModels = false;
+      try {
+        env.cacheDir = path.join(os.tmpdir(), ".transformers-cache");
+      } catch {
+        // Ignore fallback if os.tmpdir() fails
+      }
+      return (await pipeline(
+        "feature-extraction",
+        MODEL_ID,
+      )) as FeatureExtractor;
+    })();
   }
   return extractorPromise;
 }

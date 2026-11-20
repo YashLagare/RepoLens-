@@ -104,6 +104,7 @@ export function AnalysisProgress({
       let data: {
         ok?: boolean;
         error?: string;
+        message?: string;
         stage?: string;
         status?: ProgressState["status"];
         progressStep?: string;
@@ -120,21 +121,25 @@ export function AnalysisProgress({
               "Execution paused by serverless timeout. Your code chunks and progress are safely preserved.",
             );
           }
-          if (response.status === 500) {
-            throw new Error(
-              "Analysis encountered a server error. Click Retry to try again.",
-            );
-          }
           if (!response.ok) {
-            throw new Error(`Server error (${response.status}). Click Retry to try again.`);
+            const preview =
+              text && text.length < 160 && !text.includes("<html")
+                ? ` (${text.trim()})`
+                : "";
+            throw new Error(`Server returned error ${response.status}${preview}. Click Retry to try again.`);
           }
         }
       }
 
       if (!response.ok || (data && !data.ok)) {
         // Surface the real server error message directly
+        const errorDetail =
+          data?.error ||
+          data?.message ||
+          (text && text.length < 160 && !text.includes("<html") ? text.trim() : null);
+
         throw new Error(
-          data?.error ?? `Analysis server error (${response.status}). Click Retry to try again.`,
+          errorDetail ?? `Analysis server error (${response.status}). Click Retry to try again.`,
         );
       }
 

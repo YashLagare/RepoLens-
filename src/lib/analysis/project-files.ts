@@ -78,8 +78,26 @@ export async function loadProjectSourceFiles(
     );
   }
 
-  // 3. Download from GitHub (handles encrypted + raw tokens)
-  const zipBuffer = await downloadGitHubZipball(githubToken, fullName);
+  // 3. Download from GitHub (with automatic fallback to alternative account token if first token fails)
+  let zipBuffer: Buffer;
+  try {
+    zipBuffer = await downloadGitHubZipball(githubToken, fullName);
+  } catch (firstErr) {
+    const altToken =
+      githubToken === project.user.githubAccessToken
+        ? project.user.accounts?.[0]?.access_token
+        : project.user.githubAccessToken;
+
+    if (altToken && altToken !== githubToken) {
+      try {
+        zipBuffer = await downloadGitHubZipball(altToken, fullName);
+      } catch {
+        throw firstErr;
+      }
+    } else {
+      throw firstErr;
+    }
+  }
 
   // 4. Extract ZIP
   const extracted = await extractFromZipBuffer(zipBuffer, { stripRoot: true });

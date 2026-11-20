@@ -1,7 +1,5 @@
 import path from "path";
-import Parser from "tree-sitter";
-import JavaScript from "tree-sitter-javascript";
-import TypeScript from "tree-sitter-typescript";
+import type Parser from "tree-sitter";
 
 export type CodeChunkDraft = {
   filePath: string;
@@ -13,6 +11,47 @@ export type CodeChunkDraft = {
 const TARGET_MIN_TOKENS = 200;
 const TARGET_MAX_TOKENS = 400;
 const OVERLAP_TOKENS = 50;
+
+let treeSitterFailed = false;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let cachedParserClass: any = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let cachedJsLang: any = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let cachedTsLang: any = null;
+
+function getTreeSitterModules() {
+  if (treeSitterFailed) return null;
+  if (cachedParserClass) {
+    return {
+      Parser: cachedParserClass,
+      JavaScript: cachedJsLang,
+      TypeScript: cachedTsLang,
+    };
+  }
+  try {
+    // Dynamically require so module loading in serverless environments
+    // does not crash when native .node bindings cannot be compiled or loaded.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    cachedParserClass = require("tree-sitter");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    cachedJsLang = require("tree-sitter-javascript");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    cachedTsLang = require("tree-sitter-typescript");
+    return {
+      Parser: cachedParserClass,
+      JavaScript: cachedJsLang,
+      TypeScript: cachedTsLang,
+    };
+  } catch (err) {
+    console.warn(
+      "Tree-sitter native binding could not be loaded; falling back to syntax chunker:",
+      err,
+    );
+    treeSitterFailed = true;
+    return null;
+  }
+}
 
 const CHUNK_NODE_TYPES = new Set([
   "function_declaration",
@@ -33,11 +72,12 @@ function estimateTokens(text: string): number {
   return Math.max(1, Math.ceil(text.length / 4));
 }
 
-function getLanguage(filePath: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getLanguage(filePath: string, ts: { JavaScript: any; TypeScript: any }) {
   const ext = path.extname(filePath).toLowerCase();
-  if (ext === ".tsx") return TypeScript.tsx;
-  if (ext === ".ts") return TypeScript.typescript;
-  return JavaScript;
+  if (ext === ".tsx") return ts.TypeScript.tsx;
+  if (ext === ".ts") return ts.TypeScript.typescript;
+  return ts.JavaScript;
 }
 
 function splitOversized(
@@ -85,7 +125,7 @@ function collectNodes(root: Parser.SyntaxNode): Parser.SyntaxNode[] {
       // Prefer the inner declaration for export wrappers when possible
       if (node.type === "export_statement") {
         const inner =
-          node.namedChildren.find((child) =>
+          node.namedChildren.find((child: Parser.SyntaxNode) =>
             CHUNK_NODE_TYPES.has(child.type),
           ) ?? null;
         if (inner) {
@@ -139,56 +179,128 @@ function dedupeNodes(nodes: Parser.SyntaxNode[]): Parser.SyntaxNode[] {
   return output.sort((a, b) => a.startIndex - b.startIndex);
 }
 
-/** Chunk a single source file using Tree-sitter AST boundaries. */
+/** Chunk a single source file using pure JavaScript declaration boundaries. */
+function chunkSourceFileViaSyntax(
+  filePath: string,
+  source: string,
+): CodeChunkDraft[] {
+  const lines = source.split("\n");
+  if (estimateTokens(source) <= TARGET_MAX_TOKENS) {
+    return [
+      {
+        filePath,
+        content: source.trimEnd(),
+        startLine: 1,
+        endLine: lines.length,
+      },
+    ];
+  }
+
+  // Split on logical declaration boundaries (export, function, class, interface, type, const, async)
+  const declarationRegex =
+    /^(?:export\s+(?:default\s+)?)?(?:async\s+)?(?:function|class|interface|type|const|let|var|enum)\b/;
+  const drafts: CodeChunkDraft[] = [];
+
+  let currentBlockLines: string[] = [];
+  let blockStartLine = 1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const isNewDecl = declarationRegex.test(line.trim());
+    const currentTokens = estimateTokens(currentBlockLines.join("\n"));
+
+    if (
+      isNewDecl &&
+      currentTokens >= TARGET_MIN_TOKENS &&
+      currentBlockLines.length > 0
+    ) {
+      const content = currentBlockLines.join("\n").trimEnd();
+      if (currentTokens > TARGET_MAX_TOKENS) {
+        drafts.push(...splitOversized(filePath, content, blockStartLine));
+      } else {
+        drafts.push({
+          filePath,
+          content,
+          startLine: blockStartLine,
+          endLine: blockStartLine + currentBlockLines.length - 1,
+        });
+      }
+      currentBlockLines = [line];
+      blockStartLine = i + 1;
+    } else {
+      currentBlockLines.push(line);
+    }
+  }
+
+  if (currentBlockLines.length > 0) {
+    const content = currentBlockLines.join("\n").trimEnd();
+    if (content.trim()) {
+      if (estimateTokens(content) > TARGET_MAX_TOKENS) {
+        drafts.push(...splitOversized(filePath, content, blockStartLine));
+      } else {
+        drafts.push({
+          filePath,
+          content,
+          startLine: blockStartLine,
+          endLine: blockStartLine + currentBlockLines.length - 1,
+        });
+      }
+    }
+  }
+
+  return mergeSmallChunks(drafts);
+}
+
+/** Chunk a single source file using Tree-sitter AST boundaries, with syntax chunker fallback. */
 export function chunkSourceFile(
   filePath: string,
   source: string,
 ): CodeChunkDraft[] {
   if (!source.trim()) return [];
 
-  const parser = new Parser();
-  parser.setLanguage(getLanguage(filePath));
-  const tree = parser.parse(source);
-  const nodes = dedupeNodes(collectNodes(tree.rootNode));
+  const ts = getTreeSitterModules();
+  if (ts) {
+    try {
+      const parser = new ts.Parser();
+      parser.setLanguage(getLanguage(filePath, ts));
+      const tree = parser.parse(source);
+      const nodes = dedupeNodes(collectNodes(tree.rootNode));
 
-  if (nodes.length === 0) {
-    // Fallback: whole file (or split if huge)
-    if (estimateTokens(source) > TARGET_MAX_TOKENS) {
-      return splitOversized(filePath, source, 1);
+      if (nodes.length > 0) {
+        const drafts: CodeChunkDraft[] = [];
+
+        for (const node of nodes) {
+          const content = source.slice(node.startIndex, node.endIndex).trim();
+          if (!content) continue;
+
+          const startLine = node.startPosition.row + 1;
+          const endLine = node.endPosition.row + 1;
+          const tokens = estimateTokens(content);
+
+          if (tokens > TARGET_MAX_TOKENS) {
+            drafts.push(...splitOversized(filePath, content, startLine));
+            continue;
+          }
+
+          // Skip tiny noise (very small declarations), unless nothing else exists
+          if (tokens < 20 && node.type === "expression_statement") continue;
+
+          drafts.push({ filePath, content, startLine, endLine });
+        }
+
+        // Merge adjacent tiny chunks toward the 200-token target when cheap
+        return mergeSmallChunks(drafts);
+      }
+    } catch (err) {
+      console.warn(
+        `Tree-sitter parse failed for ${filePath}; falling back to syntax chunker:`,
+        err,
+      );
     }
-    return [
-      {
-        filePath,
-        content: source,
-        startLine: 1,
-        endLine: source.split("\n").length,
-      },
-    ];
   }
 
-  const drafts: CodeChunkDraft[] = [];
-
-  for (const node of nodes) {
-    const content = source.slice(node.startIndex, node.endIndex).trim();
-    if (!content) continue;
-
-    const startLine = node.startPosition.row + 1;
-    const endLine = node.endPosition.row + 1;
-    const tokens = estimateTokens(content);
-
-    if (tokens > TARGET_MAX_TOKENS) {
-      drafts.push(...splitOversized(filePath, content, startLine));
-      continue;
-    }
-
-    // Skip tiny noise (very small declarations), unless nothing else exists
-    if (tokens < 20 && node.type === "expression_statement") continue;
-
-    drafts.push({ filePath, content, startLine, endLine });
-  }
-
-  // Merge adjacent tiny chunks toward the 200-token target when cheap
-  return mergeSmallChunks(drafts);
+  // Fallback: Pure JavaScript syntax-aware declaration chunking
+  return chunkSourceFileViaSyntax(filePath, source);
 }
 
 function mergeSmallChunks(chunks: CodeChunkDraft[]): CodeChunkDraft[] {
