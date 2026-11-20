@@ -4,22 +4,28 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
+// Use weight: "variable" for all three fonts — produces exactly one CSS entry
+// per font, which is required by Turbopack's next/font/google resolver.
+// Variable fonts cover the full weight range (300–800) in a single file.
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-heading",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: "variable",
+  display: "swap",
 });
 
 const figtree = Figtree({
   variable: "--font-figtree",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "variable",
+  display: "swap",
 });
 
 const jetbrains = JetBrains_Mono({
   variable: "--font-jetbrains",
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: "variable",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
